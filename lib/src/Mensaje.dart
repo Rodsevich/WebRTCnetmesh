@@ -10,7 +10,9 @@ enum MensajesAPI {
   CANDIDATOICE_WEBRTC,
   COMANDO,
   INFORMACION,
-  INTERACCION
+  INTERACCION,
+  PING,
+  PONG,
 }
 
 /// Para especificar si el mensaje es de Broadcast o al servidor, null si es a un usuario específico
@@ -54,6 +56,12 @@ class Mensaje {
             info_direccionamiento, msjEspecifico);
       case MensajesAPI.INTERACCION:
         return new MensajeInteraccion.desdeDecodificacion(
+            info_direccionamiento, msjEspecifico);
+      case MensajesAPI.PING:
+        return new MensajePing.desdeDecodificacion(
+            info_direccionamiento, msjEspecifico);
+      case MensajesAPI.PONG:
+        return new MensajePong.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
       default:
         throw new Exception(
@@ -244,29 +252,42 @@ class MensajeInformacion extends Mensaje {
       ]);
 }
 
-/// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
-/// WebAPP \[ --> WebAPP \] --> Cliente --> Servidor
-class MensajeInteraccion extends Mensaje {
-  String id_interaccion;
-  Map valores;
+/// Mensaje enviado con iniciativa para medir el tiempo de respuesta futuro
+/// WebAPP --> \[ WebAPP | Servidor \]
+class MensajePing extends Mensaje {
+  String carga;
 
-  MensajeInteraccion(
-      String id_emisor, String id_receptor, this.id_interaccion, this.valores)
+  MensajePing(String id_emisor, String id_receptor)
       : super(id_emisor, id_receptor) {
-    this.tipo = MensajesAPI.INTERACCION;
+    this.tipo = MensajesAPI.PING;
   }
-  MensajeInteraccion.desdeDecodificacion(
+  MensajePing.desdeDecodificacion(
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    this.id_interaccion = msjEspecifico[1];
-    this.valores = msjEspecifico[2];
+    this.carga = msjEspecifico[1];
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.INTERACCION.index,
-        id_interaccion,
-        valores
-      ]);
+  String toString() => JSON
+      .encode([informacion_direccionamiento, MensajesAPI.PING.index, carga]);
+}
+
+/// Mensaje enviado responsivamente para medir el tiempo de respuesta definitivamente
+/// WebAPP --> \[ WebAPP | Servidor \]
+class MensajePong extends Mensaje {
+  String carga;
+
+  MensajePong(String id_emisor, String id_receptor)
+      : super(id_emisor, id_receptor) {
+    this.tipo = MensajesAPI.PONG;
+  }
+  MensajePong.desdeDecodificacion(
+      List info_direccionamiento, List msjEspecifico)
+      : super.desdeDecodificacion(info_direccionamiento) {
+    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
+    this.carga = msjEspecifico[1];
+  }
+
+  String toString() => JSON
+      .encode([informacion_direccionamiento, MensajesAPI.PONG.index, carga]);
 }

@@ -7,7 +7,7 @@ import "../Mensaje.dart";
 /// servidor a través de websockets (utilizados también para establecer WebRTC)
 class Servidor {
   /// Canal de comunicación con el servidor
-  WebSocket canal;
+  WebSocket _canal;
 
   Stream<Event> onConexion;
   Stream<Mensaje> onMensaje;
@@ -20,24 +20,24 @@ class Servidor {
   Servidor([String url]) {
     url ??= "ws://${window.location.host}";
     log("Creando websocket a: '$url'");
-    canal = new WebSocket(url);
-    canal.onOpen.listen(_manejadorEstablecimientoDeCanal);
+    _canal = new WebSocket(url);
+    _canal.onOpen.listen(_manejadorEstablecimientoDeCanal);
 
     _onConexionController = new StreamController();
     onConexion = _onConexionController.stream;
-    _onConexionController.addStream(canal.onOpen);
+    _onConexionController.addStream(_canal.onOpen);
 
     _onMensajeController = new StreamController();
     onMensaje = _onMensajeController.stream;
 
     log("Esperando establecimiento del canal...");
-    canal.onMessage.listen(_manejadorDatosDesdeCanal);
-    canal.onError.listen(_manejadorErroresDeCanal);
-    canal.onClose.listen(_manejadorCierreDeCanal);
+    _canal.onMessage.listen(_manejadorDatosDesdeCanal);
+    _canal.onError.listen(_manejadorErroresDeCanal);
+    _canal.onClose.listen(_manejadorCierreDeCanal);
   }
 
-  void mandarMensaje(Mensaje msj) {
-    canal.send(msj.toString());
+  void enviarMensaje(Mensaje msj) {
+    _canal.send(msj.toString());
   }
 
   void _manejadorEstablecimientoDeCanal(Event evt) {

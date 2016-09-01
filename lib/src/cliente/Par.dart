@@ -25,9 +25,9 @@ Map _restriccionDeMedios = {
 class Par {
   final Identidad identidad_local;
   Identidad identidad_remota;
-  DateTime establecimientoConexion;
-  RtcPeerConnection conexion;
-  RtcDataChannel canal;
+  DateTime _establecimientoConexion;
+  RtcPeerConnection _conexion;
+  RtcDataChannel _canal;
 
   Stream<Event> onConexion;
   Stream<Mensaje> onMensaje;
@@ -35,25 +35,41 @@ class Par {
   StreamController<Event> _onConexionController;
   StreamController<Mensaje> _onMensajeController;
 
-  bool get conectadoDirectamente => canal.negotiated;
+  bool get conectadoDirectamente => _canal.negotiated;
+
+  Duration get tiempoConectado =>
+      new DateTime.now().difference(_establecimientoConexion);
+
+  DateTime get momentoEstablecimientoCanal => _establecimientoConexion;
 
   Par(Identidad identidad_local, Identidad this.identidad_remota)
-      : this.identidad_local = identidad_local;
+      : this.identidad_local = identidad_local {
+    _canal.onOpen.listen((e) {
+      _establecimientoConexion = new DateTime.now();
+      _onConexionController.add(e);
+    });
+  }
 
-  conectar([bool reliable = false]) {
-    conexion = new RtcPeerConnection(_configuracion, _restriccionDeMedios);
-    canal = conexion.createDataChannel(
+  void conectar([bool reliable = false]) {
+    _conexion = new RtcPeerConnection(_configuracion, _restriccionDeMedios);
+    _canal = _conexion.createDataChannel(
         "${identidad_local.id_sesion}-${identidad_remota.id_sesion}",
         {"reliable": reliable});
-    conexion.createOffer({
+    _conexion.createOffer({
       'mandatory': {'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true}
     }).then((RtcSessionDescription sessionDescription) {
-      conexion.setLocalDescription(sessionDescription);
+      _conexion.setLocalDescription(sessionDescription);
       Mensaje oferta = new MensajeOfertaWebRTC(
           identidad_local.id, identidad_remota.id, sessionDescription);
       _onMensajeController.add(oferta);
     });
   }
 
-  enviarMensaje(Mensaje msj);
+  DateTime _varAuxiliarMedicionPing;
+
+  Future<int> obtenerMicrosegundosDePing() async {}
+
+  void enviarMensaje(Mensaje msj) {
+    _canal.send(msj.toString());
+  }
 }
