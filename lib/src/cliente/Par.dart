@@ -25,12 +25,15 @@ Map _restriccionDeMedios = {
 class Par {
   final Identidad identidad_local;
   Identidad identidad_remota;
-  DateTime _establecimientoConexion;
-  RtcPeerConnection _conexion;
-  RtcDataChannel _canal;
 
   Stream<Event> onConexion;
   Stream<Mensaje> onMensaje;
+
+  DateTime _establecimientoConexion;
+  List<int> _muestrasLatencia = new List(60);
+  int _punteroMuestrasLatencia = 0;
+  RtcPeerConnection _conexion;
+  RtcDataChannel _canal;
 
   StreamController<Event> _onConexionController;
   StreamController<Mensaje> _onMensajeController;
@@ -46,6 +49,7 @@ class Par {
       : this.identidad_local = identidad_local {
     _canal.onOpen.listen((e) {
       _establecimientoConexion = new DateTime.now();
+      _calcularLatencia();
       _onConexionController.add(e);
     });
   }
@@ -65,9 +69,7 @@ class Par {
     });
   }
 
-  DateTime _varAuxiliarMedicionPing;
 
-  Future<int> obtenerMicrosegundosDePing() async {}
 
   void enviarMensaje(Mensaje msj) {
     _canal.send(msj.toString());
