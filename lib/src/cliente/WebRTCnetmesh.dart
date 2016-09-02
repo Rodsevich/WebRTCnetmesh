@@ -41,6 +41,6 @@ class WebRTCnetmesh {
   void _pedirInfoRed() {
   }
 
-  void _manejadorMensajes(Mensaje event) {
+  void _manejadorMensajes(Mensaje msj) {
   }
 }
