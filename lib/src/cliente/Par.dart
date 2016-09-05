@@ -27,16 +27,16 @@ class Par {
   Identidad identidad_remota;
 
   Stream<Event> onConexion;
-  Stream<Mensaje> onMensaje;
+  Stream<MessageEvent> onMensaje;
 
   DateTime _establecimientoConexion;
-  List<int> _muestrasLatencia = new List(60);
+  List _muestrasLatencia = new List(60);
   int _punteroMuestrasLatencia = 0;
   RtcPeerConnection _conexion;
   RtcDataChannel _canal;
 
   StreamController<Event> _onConexionController;
-  StreamController<Mensaje> _onMensajeController;
+  StreamController<MessageEvent> _onMensajeController;
 
   bool get conectadoDirectamente => _canal.negotiated;
 
@@ -52,6 +52,7 @@ class Par {
       _calcularLatencia();
       _onConexionController.add(e);
     });
+    _canal.onMessage.listen(_manejadorMensajes);
   }
 
   void conectar([bool reliable = false]) {
@@ -64,12 +65,40 @@ class Par {
     }).then((RtcSessionDescription sessionDescription) {
       _conexion.setLocalDescription(sessionDescription);
       Mensaje oferta = new MensajeOfertaWebRTC(
-          identidad_local.id, identidad_remota.id, sessionDescription);
+          identidad_local.id_sesion, identidad_remota.id, sessionDescription);
       _onMensajeController.add(oferta);
     });
   }
 
+  void _manejadorMensajes(MessageEvent mensaje_llano) {
+    Mensaje mensaje = new Mensaje.desdeCodificacion(mensaje_llano.data);
+    //Evitar loops
+    if (mensaje.ids_intermediarios.contains(identidad_local.id_sesion)) return;
+    if (mensaje.id_receptor == this.identidad_local.id_sesion) {
+      switch (mensaje.tipo) {
+        case MensajesAPI.PING:
+          _canal.send(new MensajePong.desdeMensajePing(mensaje));
+          return;
+          break;
+        case MensajesAPI.PONG:
+          Duration duracion =
+              new DateTime.now().difference(_muestrasLatencia[mensaje.indice]);
+          _muestrasLatencia[mensaje.indice] = duracion;
+          return;
+      }
+    }
+    //Delegar manejo del mensaje al controlado general que contiene a este Par
+    _onMensajeController.add(mensaje_llano);
+  }
 
+  void _calcularLatencia() {
+    var index = _muestrasLatencia.length % _punteroMuestrasLatencia++;
+    MensajePing msj =
+        new MensajePing(identidad_local.id_sesion, identidad_remota.id, index);
+    String str = msj.toString();
+    _muestrasLatencia[index] = new DateTime.now();
+    _canal.send(str);
+  }
 
   void enviarMensaje(Mensaje msj) {
     _canal.send(msj.toString());
