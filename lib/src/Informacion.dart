@@ -25,6 +25,7 @@ class Informacion {
       case InformacionAPI.FIN_TRANSMISION:
         return new InfoTransmision(tipo);
       case InformacionAPI.INDEFINIDO:
+      default:
         throw new Exception("Indefinido, no se qué hacer");
     }
   }

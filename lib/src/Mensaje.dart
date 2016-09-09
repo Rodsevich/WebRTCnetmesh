@@ -1,19 +1,21 @@
 import 'dart:convert';
-import 'dart:html';
+import 'dart:html' show RtcIceCandidate, RtcSessionDescription;
 import 'Identidad.dart';
 import 'Informacion.dart';
+import 'Falta.dart';
 
 enum MensajesAPI {
-  INDEFINIDO,
   SUSCRIPCION,
-  OFERTA_WEBRTC,
-  RESPUESTA_WEBRTC,
-  CANDIDATOICE_WEBRTC,
-  COMANDO,
   INFORMACION,
+  ERROR,
+  COMANDO,
   INTERACCION,
   PING,
   PONG,
+  CANDIDATOICE_WEBRTC,
+  RESPUESTA_WEBRTC,
+  OFERTA_WEBRTC,
+  INDEFINIDO,
 }
 
 /// Para especificar si el mensaje es de Broadcast o al servidor, null si es a un usuario específico
@@ -56,6 +58,9 @@ abstract class Mensaje {
       case MensajesAPI.INFORMACION:
         return new MensajeInformacion.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
+      case MensajesAPI.ERROR:
+        return new MensajeFalta.desdeDecodificacion(
+            info_direccionamiento, msjEspecifico);
       case MensajesAPI.INTERACCION:
         return new MensajeInteraccion.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
@@ -92,11 +97,12 @@ abstract class Mensaje {
     this.ids_intermediarios = info[2];
   }
 
-  String serializado();
+  String serializar();
 
   String toString() {
     //Le volamos los [] extremos que es al pedo mandarlos por redundantes
-    String serializacion = serializado();
+    @override
+    String serializacion = serializar();
     return serializacion.substring(1, serializacion.length - 2);
   }
 }
@@ -118,7 +124,8 @@ class MensajeSuscripcion extends Mensaje {
     this.identidad = msjEspecifico[1];
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.SUSCRIPCION.index,
         [identidad.id]
@@ -144,7 +151,8 @@ class MensajeOfertaWebRTC extends Mensaje {
     oferta.sdp = datosOferta[0];
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.OFERTA_WEBRTC.index,
         [oferta.sdp]
@@ -170,7 +178,8 @@ class MensajeRespuestaWebRTC extends Mensaje {
     respuesta.sdp = datosRespuesta[0];
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.RESPUESTA_WEBRTC.index,
         [respuesta.sdp]
@@ -199,7 +208,8 @@ class MensajeCandidatoICEWebRTC extends Mensaje {
     });
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.RESPUESTA_WEBRTC.index,
         [candidato.candidate, candidato.sdpMid, candidato.sdpMLineIndex]
@@ -226,7 +236,8 @@ class MensajeComando extends Mensaje {
     this.argumentos = msjEspecifico[2];
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.COMANDO.index,
         comando,
@@ -250,11 +261,33 @@ class MensajeInformacion extends Mensaje {
     this.informacion = msjEspecifico[1];
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.INFORMACION.index,
         informacion,
       ]);
+}
+
+/// Informe de un fallo: COsas que se pretendía que fueran unas, pero son otras
+/// WebAPP \[ --> WebAPP | Servidor\] --> \[ --> WebAPP | Servidor\]
+class MensajeFalta extends Mensaje {
+  Falta falta;
+
+  MensajeFalta(int id_emisor, String id_receptor, Falta this.falta)
+      : super(id_emisor, id_receptor) {
+    this.tipo = MensajesAPI.ERROR;
+  }
+  MensajeFalta.desdeDecodificacion(
+      List info_direccionamiento, List msjEspecifico)
+      : super.desdeDecodificacion(info_direccionamiento) {
+    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
+    this.falta = msjEspecifico[1];
+  }
+
+  @override
+  String serializar() => JSON.encode(
+      [informacion_direccionamiento, MensajesAPI.INFORMACION.index, falta]);
 }
 
 /// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
@@ -276,7 +309,8 @@ class MensajeInteraccion extends Mensaje {
     this.valores = msjEspecifico[2];
   }
 
-  String serializado() => JSON.encode([
+  @override
+  String serializar() => JSON.encode([
         informacion_direccionamiento,
         MensajesAPI.INFORMACION.index,
         id_interaccion,
@@ -300,7 +334,8 @@ class MensajePing extends Mensaje {
     this.indice = msjEspecifico[1];
   }
 
-  String serializado() => JSON
+  @override
+  String serializar() => JSON
       .encode([informacion_direccionamiento, MensajesAPI.PING.index, indice]);
 }
 
@@ -322,6 +357,7 @@ class MensajePong extends Mensaje {
   MensajePong.desdeMensajePing(MensajePing msj)
       : this(msj.id_receptor, msj.id_emisor.toString(), msj.indice);
 
-  String serializado() => JSON
+  @override
+  String serializar() => JSON
       .encode([informacion_direccionamiento, MensajesAPI.PONG.index, indice]);
 }

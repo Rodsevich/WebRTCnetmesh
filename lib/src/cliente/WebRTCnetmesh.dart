@@ -17,7 +17,7 @@ class WebRTCnetmesh {
     server = new Servidor(server_uri);
     server.onMensaje.listen(_manejadorMensajes);
     server.onConexion.listen((e){
-      _manejadorConexionServidor(e);
+      server.enviarMensaje(new MensajeSuscripcion(identity));
       _pedirInfoRed();
     });
   }
@@ -28,7 +28,7 @@ class WebRTCnetmesh {
 
   int get totalPairs => pairs.length;
 
-  int get amountDirectlyConnected =>
+  int get amountPairsDirectlyConnected =>
       pairs.where((Par p) => p.conectadoDirectamente).length;
 
   Stream<Mensaje> onMessage;
@@ -39,6 +39,7 @@ class WebRTCnetmesh {
   }
 
   void _pedirInfoRed() {
+
   }
 
   void _manejadorMensajes(Mensaje msj) {
