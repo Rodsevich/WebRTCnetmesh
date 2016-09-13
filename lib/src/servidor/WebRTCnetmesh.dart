@@ -6,6 +6,7 @@ import "../Mensaje.dart";
 import "dart:async";
 import "dart:io";
 import 'package:WebRTCnetmesh/src/Informacion.dart';
+import 'package:WebRTCnetmesh/src/Falta.dart';
 
 /// Clase que el usuario final deberá instanciar para usar la librería cómoda
 ///y modularmente
@@ -19,7 +20,50 @@ class WebRTCnetmesh {
     server.onNuevoWebSocket.listen(_manejadorNuevosClientes);
   }
 
-  send(Identidad to, Mensaje message) {}
+  /// Handles the sending of both the information and the destinatary supplied
+  send(to, data) {
+    DestinatariosMensaje desde = DestinatariosMensaje.SERVIDOR;
+    Identidad para;
+    Mensaje msj;
+    Cliente medio;
+    switch (to.runtimeType) {
+      case Cliente:
+        para = to.identidad_remota;
+        medio = to;
+        break;
+
+      case Identidad:
+        para = to;
+        medio = searchClient(to);
+        break;
+
+      case int:
+        //must be the session_id
+        Identidad id_busqueda = new Identidad("");
+        id_busqueda.id_sesion = to;
+        medio = searchClient(id_busqueda);
+        para = medio.identidad_remota;
+        break;
+    }
+
+    switch (data.runtimeType) {
+      case Mensaje:
+        msj = data;
+        break;
+
+      case Falta:
+        msj = new MensajeFalta(desde, para, data);
+        break;
+
+      case Informacion:
+        msj = new MensajeInformacion(desde, para, data);
+        break;
+
+      case Comando:
+        msj = new MensajeComando(desde, para, data);
+        break;
+    }
+  }
 
   sendAll(Mensaje msj) {}
 
@@ -48,6 +92,11 @@ class WebRTCnetmesh {
           info.usuario = (msj as MensajeSuscripcion).identidad;
           sendAll(new MensajeInformacion(
               identity, DestinatariosMensaje.TODOS, info));
+        } else {
+          FaltaNombreNoDisponible falta;
+          Cliente cliente = searchClient((msj as MensajeSuscripcion).identidad);
+          falta = new FaltaNombreNoDisponible(cliente.identidad_remota);
+          send(emisor.identidad_remota, falta);
         }
         break;
       case MensajesAPI.COMANDO:

@@ -127,8 +127,7 @@ class WebRTCnetmesh {
   Par _buscarPar(Identidad id) {
     Par ret;
     try {
-      ret = pairs.singleWhere(
-          (Par par) => par.identidad_remota.id_sesion == id.id_sesion);
+      ret = pairs.singleWhere((par) => par.identidad_remota == id);
     } catch (e) {
       //no aparece o hay más de una identidad igual
       ret = null;
