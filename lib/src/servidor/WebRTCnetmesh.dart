@@ -4,6 +4,8 @@ import "../Comando.dart";
 import "../Identidad.dart";
 import "../Mensaje.dart";
 import "dart:async";
+import "dart:io";
+import 'package:WebRTCnetmesh/src/Informacion.dart';
 
 /// Clase que el usuario final deberá instanciar para usar la librería cómoda
 ///y modularmente
@@ -14,7 +16,7 @@ class WebRTCnetmesh {
 
   WebRTCNetwork([String path, int port]) {
     server = new Servidor(path, port);
-    server.onNuevoCliente.listen(_manejadorNuevosClientes);
+    server.onNuevoWebSocket.listen(_manejadorNuevosClientes);
   }
 
   send(Identidad to, Mensaje message) {}
@@ -30,12 +32,25 @@ class WebRTCnetmesh {
   Stream<Comando> onCommand;
   Stream<Identidad> onNewConnection;
 
-  void _manejadorMensajes(Mensaje msj) {
+  void _manejadorMensajes(Mensaje msj, Cliente emisor) {
     switch (msj.tipo) {
-      case MensajesAPI.COMANDO:
-        break;
       case MensajesAPI.SUSCRIPCION:
+        if (searchClient((msj as MensajeSuscripcion).identidad) == null) {
+          InfoUsuarios usuarios = new InfoUsuarios();
+          emisor.identidad_remota.nombre =
+              (msj as MensajeSuscripcion).identidad.nombre;
+          clients.forEach((c) {
+            usuarios.usuarios.add(c.identidad_remota);
+          });
+          emisor.enviarMensaje(new MensajeInformacion(
+              identity, emisor.identidad_remota, usuarios));
+          InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
+          info.usuario = (msj as MensajeSuscripcion).identidad;
+          sendAll(new MensajeInformacion(
+              identity, DestinatariosMensaje.TODOS, info));
+        }
         break;
+      case MensajesAPI.COMANDO:
       case MensajesAPI.INFORMACION:
       case MensajesAPI.INDEFINIDO:
       default:
@@ -44,8 +59,21 @@ class WebRTCnetmesh {
     }
   }
 
-  void _manejadorNuevosClientes(Cliente cliente) {
-    cliente.onMensaje.listen(_manejadorMensajes);
+  Cliente searchClient(Identidad identity) {
+    try {
+      return clients.singleWhere((c) => c.identidad_remota == identity);
+    } on StateError {
+      return null;
+    }
+  }
+
+  int _contador_sesiones = 0;
+  void _manejadorNuevosClientes(WebSocket ws) {
+    Cliente cliente = new Cliente(ws, identity);
+    cliente.identidad_remota.id_sesion = _contador_sesiones++;
+    cliente.onMensaje.listen((msj) {
+      _manejadorMensajes(msj, cliente);
+    });
     clients.add(cliente);
   }
 }

@@ -10,16 +10,18 @@ class Identidad {
 
   void set nombre(String nom) {
     for (int codigo in nom.codeUnits) {
-      if (codigo < 'A'.codeUnits[0] ||
+      if (codigo < 'A'.codeUnits[0] && codigo != ' '.codeUnitAt(0) ||
           codigo > 'z'.codeUnitAt(0) ||
           (codigo > 'Z'.codeUnitAt(0) && codigo < 'a'.codeUnitAt(0)))
         throw new Exception(
             "Name contains something else than just letters: '${new String.fromCharCode(codigo)}'");
     }
+    _nombre = nom;
   }
 
-  Identidad(int this.id_sesion);
+  Identidad(String this._nombre);
   Identidad.desdeString(String codificacion) {
+    codificacion = codificacion.substring(1, codificacion.length - 1);
     List<String> vals = codificacion.split(',');
     nombre = vals[0];
     id_sesion = int.parse(vals[1]);
@@ -43,12 +45,22 @@ class Identidad {
   String get id => id_sesion.toString();
 
   String toString() {
-    String tmp = "$nombre,${id_sesion.toString()}";
-    if (id_github != null) tmp += ",g$id_github";
-    if (id_goog != null) tmp += ",G$id_goog";
-    if (id_feis != null) tmp += ",F$id_feis";
-    if (email != null) tmp += ",E$email";
+    String tmp = "{$nombre";
+    if (id_sesion != null)
+      tmp += ",$id_sesion";
+    else {
+      if (id_github != null) tmp += ",g$id_github";
+      if (id_goog != null) tmp += ",G$id_goog";
+      if (id_feis != null) tmp += ",F$id_feis";
+      if (email != null) tmp += ",E$email";
+    }
+    return "$tmp}";
+  }
 
-    return tmp;
+  bool operator ==(Identidad otra) {
+    if (this.id_sesion == null || otra.id_sesion == null)
+      return this.nombre == otra.nombre;
+    else
+      return this.id_sesion == otra.id_sesion;
   }
 }

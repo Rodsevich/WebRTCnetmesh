@@ -31,10 +31,6 @@ class Cliente {
     if (mensaje.ids_intermediarios.contains(identidad_local.id_sesion)) return;
     if (mensaje.id_receptor == this.identidad_local.id_sesion) {
       switch (mensaje.tipo) {
-        // case MensajesAPI.SUSCRIPCION:
-        //   mensaje = mensaje as MensajeSuscripcion;
-        //   identidad_remota = mensaje.identidad;
-        //   break;
         case MensajesAPI.PING:
           enviarMensaje(new MensajePong.desdeMensajePing(mensaje));
           return;
