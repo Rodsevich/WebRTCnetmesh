@@ -69,8 +69,6 @@ class Par {
     });
   }
 
-
-
   void enviarMensaje(Mensaje msj) {
     _canal.send(msj.toString());
   }
