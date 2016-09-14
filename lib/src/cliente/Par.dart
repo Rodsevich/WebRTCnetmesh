@@ -20,8 +20,8 @@ Map _restriccionDeMedios = {
   ]
 };
 
-/// Objeto que el cliente tendrá por cada conexión con otro [Par], que lo proveerá
-/// de funcionalidad de alto nivel para facilitar la comunicación
+/// Objeto que el cliente tendrá por cada conexión con otro [Par], que lo
+/// proveerá de funcionalidad de alto nivel para facilitar la comunicación
 class Par {
   final Identidad identidad_local;
   Identidad identidad_remota;
@@ -30,16 +30,23 @@ class Par {
   Stream<Mensaje> onMensaje;
 
   DateTime _establecimientoConexion;
-  List<int> _muestrasLatencia = new List(60);
+  DateTime _ultimaComunicacion;
+  List<Stopwatch> _muestrasLatencia = new List(60);
   int _punteroMuestrasLatencia = 0;
+  Timer _medidorLapsoPing;
+
   RtcPeerConnection _conexion;
   RtcDataChannel _canal;
 
   StreamController<Event> _onConexionController;
   StreamController<Mensaje> _onMensajeController;
 
+  Duration lapsoMedicionPing = new Duration(seconds: 1);
+
   bool get conectadoDirectamente => _canal.negotiated;
 
+  Duration get tiempoSinComunicacion =>
+      new DateTime.now().difference(_ultimaComunicacion);
   Duration get tiempoConectado =>
       new DateTime.now().difference(_establecimientoConexion);
 
@@ -47,29 +54,93 @@ class Par {
 
   Par(Identidad identidad_local, Identidad this.identidad_remota)
       : this.identidad_local = identidad_local {
+    _onConexionController = new StreamController();
+    _onMensajeController = new StreamController();
+    this.onConexion = _onConexionController.stream;
+    this.onMensaje = _onMensajeController.stream;
     _canal.onOpen.listen((e) {
       _establecimientoConexion = new DateTime.now();
-      _calcularLatencia();
+      _medidorLapsoPing =
+          new Timer.periodic(lapsoMedicionPing, _calcularLatencia);
       _onConexionController.add(e);
     });
+    _canal.onMessage.listen(_manejadorMensajes);
+    _canal.onClose.listen((e) => _medidorLapsoPing.cancel());
   }
 
-  void conectar([bool reliable = false]) {
+  Future<MensajeOfertaWebRTC> mensaje_inicio_conexion(
+      [bool reliable = false]) async {
     _conexion = new RtcPeerConnection(_configuracion, _restriccionDeMedios);
+    _conexion.onIceCandidate.listen((RtcIceCandidateEvent event) {
+      if (event.candidate != null)
+        _onMensajeController.add(new MensajeCandidatoICEWebRTC(
+            identidad_local.id_sesion, identidad_remota.id, event.candidate));
+    });
     _canal = _conexion.createDataChannel(
         "${identidad_local.id_sesion}-${identidad_remota.id_sesion}",
         {"reliable": reliable});
-    _conexion.createOffer({
+    RtcSessionDescription sessionDescription = await _conexion.createOffer({
       'mandatory': {'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true}
-    }).then((RtcSessionDescription sessionDescription) {
-      _conexion.setLocalDescription(sessionDescription);
-      Mensaje oferta = new MensajeOfertaWebRTC(
-          identidad_local.id, identidad_remota.id, sessionDescription);
-      _onMensajeController.add(oferta);
     });
+    _conexion.setLocalDescription(sessionDescription);
+    return new MensajeOfertaWebRTC(
+        identidad_local.id_sesion, identidad_remota.id, sessionDescription);
   }
 
+<<<<<<< HEAD
+=======
+  Future<MensajeRespuestaWebRTC> mensaje_respuesta_inicio_conexion(
+      RtcSessionDescription oferta) async {
+    _conexion.setRemoteDescription(oferta);
+    RtcSessionDescription sessionDescription = await _conexion.createAnswer();
+    return new MensajeRespuestaWebRTC(
+        identidad_local.id_sesion, identidad_remota.id, sessionDescription);
+  }
+
+  void setear_ice_candidate_remoto(RtcIceCandidate candidato) {
+    _conexion.addIceCandidate(candidato, null, null);
+  }
+
+  void _manejadorMensajes(MessageEvent mensaje_llano) {
+    Mensaje mensaje = new Mensaje.desdeCodificacion(mensaje_llano.data);
+    //Evitar loops
+    if (mensaje.ids_intermediarios.contains(identidad_local.id_sesion)) return;
+    if (mensaje.id_receptor == this.identidad_local.id_sesion) {
+      switch (mensaje.tipo) {
+        case MensajesAPI.PING:
+          enviarMensaje(new MensajePong.desdeMensajePing(mensaje));
+          return;
+          break;
+        case MensajesAPI.PONG:
+          MensajePong mensaje = mensaje as MensajePong;
+          _muestrasLatencia[mensaje.indice].stop();
+          return;
+          break;
+        default:
+          //Delegar manejo del mensaje al controlador general que contiene a este Par
+          _onMensajeController.add(mensaje);
+          _ultimaComunicacion = new DateTime.now();
+      }
+    } else {
+      //Agregar este par como repetidor del envío del mensaje
+      mensaje.ids_intermediarios.add(identidad_local.id_sesion);
+      _onMensajeController.add(mensaje);
+      _ultimaComunicacion = new DateTime.now();
+    }
+  }
+
+  void _calcularLatencia(Timer timer) {
+    var index = _muestrasLatencia.length % _punteroMuestrasLatencia++;
+    MensajePing msj =
+        new MensajePing(identidad_local.id_sesion, identidad_remota.id, index);
+    //Separar en una avriable indepte. para no medir como tiempo de ping la implícita conversion a String al mandarlo
+    String str = msj.toString();
+    _muestrasLatencia[index] = new Stopwatch()..start();
+    _canal.sendString(str);
+  }
+
+>>>>>>> 65e44020112429310cfa45a4ebc303ff545f789e
   void enviarMensaje(Mensaje msj) {
-    _canal.send(msj.toString());
+    _canal.sendString(msj.toString());
   }
 }

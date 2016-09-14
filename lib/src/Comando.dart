@@ -22,6 +22,10 @@ abstract class Comando {
     }
   }
 
+  factory Comando.desdeCodificacion(String codificacion) {
+    return new Comando.desdeTipo(ComandosAPI.INDEFINIDO);
+  }
+
   int codificacionComandoAPI(ComandosAPI msj) {
     List<ComandosAPI> vals = ComandosAPI.values;
     for (var i in vals) if (msj == vals[i]) return i;

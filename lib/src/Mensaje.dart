@@ -1,41 +1,83 @@
 import 'dart:convert';
-import 'dart:html';
+import 'dart:html' show RtcIceCandidate, RtcSessionDescription;
 import 'Identidad.dart';
+import 'Informacion.dart';
+import 'Falta.dart';
+import 'package:WebRTCnetmesh/src/Comando.dart';
 
 enum MensajesAPI {
-  INDEFINIDO,
   SUSCRIPCION,
-  OFERTA_WEBRTC,
-  RESPUESTA_WEBRTC,
-  CANDIDATOICE_WEBRTC,
-  COMANDO,
   INFORMACION,
+  FALTA,
+  COMANDO,
   INTERACCION,
   PING,
   PONG,
+  CANDIDATOICE_WEBRTC,
+  RESPUESTA_WEBRTC,
+  OFERTA_WEBRTC,
+  INDEFINIDO,
 }
 
-/// Para especificar si el mensaje es de Broadcast o al servidor, null si es a un usuario específico
+/// Para especificar si el mensaje es de Broadcast o al servidor, null si es a
+/// un usuario específico
 enum DestinatariosMensaje { SERVIDOR, TODOS }
 
-class Mensaje {
+abstract class Mensaje {
   MensajesAPI tipo;
-  String id_emisor;
+  int _id_emisor;
+
+  int get id_emisor => _id_emisor;
+
+  void set id_emisor(id_emisor) {
+    if (id_emisor is int)
+      _id_emisor = id_emisor;
+    else if (id_emisor is Identidad)
+      _id_emisor = id_emisor.id_sesion;
+    else
+      throw new Exception("Usá un int o una Identidad, pls.");
+  }
 
   /// Si es String será el id, si es DestinatariosMensaje, SERVIDOR o TODOS
-  var id_receptor;
-  List<String> ids_intermediarios;
+  var _id_receptor;
 
-  Mensaje(this.id_emisor, this.id_receptor) {
+  get id_receptor {
+    if (id_receptor >= 0)
+      return _id_receptor;
+    else
+      return DestinatariosMensaje.values[_id_receptor * -1];
+  }
+
+  void set id_receptor(id_receptor) {
+    if (id_receptor is DestinatariosMensaje)
+      _id_receptor = id_receptor.index * -1;
+    else if (id_receptor is String)
+      _id_receptor = int.parse(id_receptor);
+    else if (id_receptor is int)
+      _id_receptor = id_receptor;
+    else if (id_receptor is Identidad)
+      _id_receptor = id_receptor.id_sesion;
+    else
+      throw new Exception(
+          "Usá un String, int, Identidad o DestinatariosMensaje, pls.");
+  }
+
+  List<int> ids_intermediarios;
+
+  Mensaje(emisor, receptor) {
+    this.id_emisor = emisor;
+    this.id_receptor = receptor;
     tipo = MensajesAPI.INDEFINIDO;
   }
 
   /// Decodifica un mensaje recibido desde un Cliente en su clase correspondiente
   factory Mensaje.desdeCodificacion(String json) {
-    List msjDecodificado = JSON.decode(json);
+    //agregando los [] removidos al momento de codificarlos
+    List msjDecodificado = JSON.decode("[$json]");
     List info_direccionamiento = msjDecodificado[0];
-    List msjEspecifico = msjDecodificado.sublist(1);
-    switch (MensajesAPI.values[msjEspecifico[0]]) {
+    MensajesAPI tipo = MensajesAPI.values[msjDecodificado[1]];
+    List msjEspecifico = msjDecodificado.sublist(2);
+    switch (tipo) {
       case MensajesAPI.COMANDO:
         return new MensajeComando.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
@@ -53,6 +95,9 @@ class Mensaje {
             info_direccionamiento, msjEspecifico);
       case MensajesAPI.INFORMACION:
         return new MensajeInformacion.desdeDecodificacion(
+            info_direccionamiento, msjEspecifico);
+      case MensajesAPI.FALTA:
+        return new MensajeFalta.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
       case MensajesAPI.INTERACCION:
         return new MensajeInteraccion.desdeDecodificacion(
@@ -89,6 +134,22 @@ class Mensaje {
     this.id_receptor = info[1];
     this.ids_intermediarios = info[2];
   }
+
+  /// Metodo implementado por cada Mensaje para devolver una lista de parametros
+  /// propios de cada uno
+  String _serializacionPropia();
+
+  /// Codificación eficiente para ser enviada por los canales de comunicación
+  String toString() {
+    //Le volamos los [] extremos que es al pedo mandarlos por redundantes
+    String datos_propios = _serializacionPropia();
+    String serializacion = JSON.encode([
+      informacion_direccionamiento,
+      this.tipo.index,
+      datos_propios.substring(1, datos_propios.length - 1)
+    ]);
+    return serializacion.substring(1, serializacion.length - 1);
+  }
 }
 
 /// Mensaje enviado por el cliente para que el Servidor tenga su información
@@ -104,15 +165,12 @@ class MensajeSuscripcion extends Mensaje {
   MensajeSuscripcion.desdeDecodificacion(
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
-    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    this.identidad = msjEspecifico[1];
+    this.tipo = MensajesAPI.SUSCRIPCION;
+    this.identidad = new Identidad.desdeString(msjEspecifico[1]);
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.SUSCRIPCION.index,
-        [identidad.id]
-      ]);
+  @override
+  String _serializacionPropia() => JSON.encode(identidad);
 }
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
@@ -121,7 +179,7 @@ class MensajeSuscripcion extends Mensaje {
 class MensajeOfertaWebRTC extends Mensaje {
   RtcSessionDescription oferta;
 
-  MensajeOfertaWebRTC(String id_emisor, String id_receptor, this.oferta)
+  MensajeOfertaWebRTC(id_emisor, id_receptor, this.oferta)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.OFERTA_WEBRTC;
   }
@@ -134,11 +192,8 @@ class MensajeOfertaWebRTC extends Mensaje {
     oferta.sdp = datosOferta[0];
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.OFERTA_WEBRTC.index,
-        [oferta.sdp]
-      ]);
+  @override
+  String _serializacionPropia() => JSON.encode([oferta.sdp]);
 }
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
@@ -147,24 +202,20 @@ class MensajeOfertaWebRTC extends Mensaje {
 class MensajeRespuestaWebRTC extends Mensaje {
   RtcSessionDescription respuesta;
 
-  MensajeRespuestaWebRTC(String id_emisor, String id_receptor, this.respuesta)
+  MensajeRespuestaWebRTC(id_emisor, id_receptor, this.respuesta)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.RESPUESTA_WEBRTC;
   }
   MensajeRespuestaWebRTC.desdeDecodificacion(
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
-    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    List<String> datosRespuesta = msjEspecifico[1];
+    this.tipo = MensajesAPI.RESPUESTA_WEBRTC;
     this.respuesta = new RtcSessionDescription();
-    respuesta.sdp = datosRespuesta[0];
+    respuesta.sdp = msjEspecifico[0];
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.RESPUESTA_WEBRTC.index,
-        [respuesta.sdp]
-      ]);
+  @override
+  String _serializacionPropia() => JSON.encode([respuesta.sdp]);
 }
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
@@ -173,16 +224,14 @@ class MensajeRespuestaWebRTC extends Mensaje {
 class MensajeCandidatoICEWebRTC extends Mensaje {
   RtcIceCandidate candidato;
 
-  MensajeCandidatoICEWebRTC(
-      String id_emisor, String id_receptor, this.candidato)
+  MensajeCandidatoICEWebRTC(id_emisor, id_receptor, this.candidato)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.RESPUESTA_WEBRTC;
   }
   MensajeCandidatoICEWebRTC.desdeDecodificacion(
-      List info_direccionamiento, List msjEspecifico)
+      List info_direccionamiento, List datosCandidato)
       : super.desdeDecodificacion(info_direccionamiento) {
-    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    List<String> datosCandidato = msjEspecifico[1];
+    this.tipo = MensajesAPI.RESPUESTA_WEBRTC;
     this.candidato = new RtcIceCandidate({
       "candidate": datosCandidato[0],
       "sdpMid": datosCandidato[1],
@@ -190,74 +239,100 @@ class MensajeCandidatoICEWebRTC extends Mensaje {
     });
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.RESPUESTA_WEBRTC.index,
-        [candidato.candidate, candidato.sdpMid, candidato.sdpMLineIndex]
-      ]);
+  @override
+  String _serializacionPropia() => JSON
+      .encode([candidato.candidate, candidato.sdpMid, candidato.sdpMLineIndex]);
 }
 
 /// Comando para que se ejecute funcionalidad remotamente
 /// WebAPP --> Cliente --> Servidor
 /// Servidor --> Cliente { --> WebAPP } --> WebApp
 class MensajeComando extends Mensaje {
-  String comando;
-  List<String> argumentos;
+  Comando comando;
 
-  MensajeComando(
-      String id_emisor, String id_receptor, this.comando, this.argumentos)
+  MensajeComando(id_emisor, id_receptor, this.comando)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.COMANDO;
   }
   MensajeComando.desdeDecodificacion(
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
-    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    this.comando = msjEspecifico[1];
-    this.argumentos = msjEspecifico[2];
+    this.tipo = MensajesAPI.COMANDO;
+    this.comando = new Comando.desdeCodificacion(msjEspecifico[1]);
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.COMANDO.index,
-        comando,
-        argumentos
-      ]);
+  @override
+  String _serializacionPropia() => JSON.encode(comando);
 }
 
-/// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
-/// WebAPP \[ --> WebAPP \] --> Cliente --> Servidor
+/// Los _metadatos_ que mantienen vivo al sistema con, justamente, actualizaciones de Informaciones
+/// WebAPP \[ --> WebAPP | Servidor\] --> \[ --> WebAPP | Servidor\]
 class MensajeInformacion extends Mensaje {
-  String id_informacion;
-  Map valores;
+  Informacion informacion;
 
-  MensajeInformacion(
-      String id_emisor, String id_receptor, this.id_informacion, this.valores)
+  MensajeInformacion(id_emisor, id_receptor, this.informacion)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.INFORMACION;
   }
   MensajeInformacion.desdeDecodificacion(
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
+    this.tipo = MensajesAPI.INFORMACION;
+    this.informacion = new Informacion.desdeCodificacion(msjEspecifico[1]);
+  }
+
+  @override
+  String _serializacionPropia() => JSON.encode(informacion);
+}
+
+/// Informe de un fallo: COsas que se pretendía que fueran unas, pero son otras
+/// WebAPP \[ --> WebAPP | Servidor\] --> \[ --> WebAPP | Servidor\]
+class MensajeFalta extends Mensaje {
+  Falta falta;
+
+  MensajeFalta(id_emisor, id_receptor, Falta this.falta)
+      : super(id_emisor, id_receptor) {
+    this.tipo = MensajesAPI.FALTA;
+  }
+  MensajeFalta.desdeDecodificacion(
+      List info_direccionamiento, List msjEspecifico)
+      : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    this.id_informacion = msjEspecifico[1];
+    this.falta = msjEspecifico[1];
+  }
+
+  @override
+  String _serializacionPropia() => JSON.encode(falta);
+}
+
+/// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
+/// WebAPP \[ --> WebAPP \] --> Cliente --> Servidor
+class MensajeInteraccion extends Mensaje {
+  String id_interaccion;
+  Map valores;
+
+  MensajeInteraccion(id_emisor, id_receptor, this.id_interaccion, this.valores)
+      : super(id_emisor, id_receptor) {
+    this.tipo = MensajesAPI.INFORMACION;
+  }
+  MensajeInteraccion.desdeDecodificacion(
+      List info_direccionamiento, List msjEspecifico)
+      : super.desdeDecodificacion(info_direccionamiento) {
+    this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
+    this.id_interaccion = msjEspecifico[1];
     this.valores = msjEspecifico[2];
   }
 
-  String toString() => JSON.encode([
-        informacion_direccionamiento,
-        MensajesAPI.INFORMACION.index,
-        id_informacion,
-        valores
-      ]);
+  @override
+  String _serializacionPropia() => JSON.encode([id_interaccion, valores]);
 }
 
 /// Mensaje enviado con iniciativa para medir el tiempo de respuesta futuro
 /// WebAPP --> \[ WebAPP | Servidor \]
 class MensajePing extends Mensaje {
-  String carga;
+  int indice;
 
-  MensajePing(String id_emisor, String id_receptor)
+  MensajePing(id_emisor, id_receptor, this.indice)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.PING;
   }
@@ -265,19 +340,19 @@ class MensajePing extends Mensaje {
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    this.carga = msjEspecifico[1];
+    this.indice = msjEspecifico[1];
   }
 
-  String toString() => JSON
-      .encode([informacion_direccionamiento, MensajesAPI.PING.index, carga]);
+  @override
+  String _serializacionPropia() => JSON.encode(indice);
 }
 
 /// Mensaje enviado responsivamente para medir el tiempo de respuesta definitivamente
 /// WebAPP --> \[ WebAPP | Servidor \]
 class MensajePong extends Mensaje {
-  String carga;
+  int indice;
 
-  MensajePong(String id_emisor, String id_receptor)
+  MensajePong(id_emisor, id_receptor, this.indice)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.PONG;
   }
@@ -285,9 +360,11 @@ class MensajePong extends Mensaje {
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = decodificacionMensajeAPI(msjEspecifico[0]);
-    this.carga = msjEspecifico[1];
+    this.indice = msjEspecifico[1];
   }
+  MensajePong.desdeMensajePing(MensajePing msj)
+      : this(msj.id_receptor, msj.id_emisor.toString(), msj.indice);
 
-  String toString() => JSON
-      .encode([informacion_direccionamiento, MensajesAPI.PONG.index, carga]);
+  @override
+  String _serializacionPropia() => JSON.encode(indice);
 }
