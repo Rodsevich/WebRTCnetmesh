@@ -3,6 +3,7 @@ import 'dart:html' show RtcIceCandidate, RtcSessionDescription;
 import 'Identidad.dart';
 import 'Informacion.dart';
 import 'Falta.dart';
+import 'package:WebRTCnetmesh/src/Comando.dart';
 
 enum MensajesAPI {
   SUSCRIPCION,
@@ -247,10 +248,9 @@ class MensajeCandidatoICEWebRTC extends Mensaje {
 /// WebAPP --> Cliente --> Servidor
 /// Servidor --> Cliente { --> WebAPP } --> WebApp
 class MensajeComando extends Mensaje {
-  String comando;
-  List<String> argumentos;
+  Comando comando;
 
-  MensajeComando(id_emisor, id_receptor, this.comando, this.argumentos)
+  MensajeComando(id_emisor, id_receptor, this.comando)
       : super(id_emisor, id_receptor) {
     this.tipo = MensajesAPI.COMANDO;
   }
@@ -258,12 +258,11 @@ class MensajeComando extends Mensaje {
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = MensajesAPI.COMANDO;
-    this.comando = msjEspecifico[0];
-    this.argumentos = msjEspecifico[1];
+    this.comando = new Comando.desdeCodificacion(msjEspecifico[1]);
   }
 
   @override
-  String _serializacionPropia() => JSON.encode([comando, argumentos]);
+  String _serializacionPropia() => JSON.encode(comando);
 }
 
 /// Los _metadatos_ que mantienen vivo al sistema con, justamente, actualizaciones de Informaciones

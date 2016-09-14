@@ -5,6 +5,7 @@ class Identidad {
   String id_goog;
   String id_github;
   String email;
+  bool es_servidor = false;
 
   String get nombre => _nombre;
 
@@ -24,9 +25,12 @@ class Identidad {
     codificacion = codificacion.substring(1, codificacion.length - 1);
     List<String> vals = codificacion.split(',');
     nombre = vals[0];
-    id_sesion = int.parse(vals[1]);
+    if (vals.length >= 2) id_sesion = int.parse(vals[1]);
     for (int i = 2; i < vals.length; i++)
       switch (vals[i][0]) {
+      case '\$':
+        this.es_servidor = true;
+        break;
       case 'g':
         id_github = vals[i].substring(1);
         break;
@@ -45,16 +49,14 @@ class Identidad {
   String get id => id_sesion.toString();
 
   String toString() {
-    String tmp = "{$nombre";
-    if (id_sesion != null)
-      tmp += ",$id_sesion";
-    else {
-      if (id_github != null) tmp += ",g$id_github";
-      if (id_goog != null) tmp += ",G$id_goog";
-      if (id_feis != null) tmp += ",F$id_feis";
-      if (email != null) tmp += ",E$email";
-    }
-    return "$tmp}";
+    List<String> tmp = ["$nombre"];
+    if (id_sesion != null) tmp.add("$id_sesion");
+    if (id_github != null) tmp.add("g$id_github");
+    if (id_goog != null) tmp.add("G$id_goog");
+    if (id_feis != null) tmp.add("F$id_feis");
+    if (email != null) tmp.add("E$email");
+    if (es_servidor) tmp.add('\$');
+    return tmp.reduce((a, b) => a += ",$b");
   }
 
   bool operator ==(Identidad otra) {

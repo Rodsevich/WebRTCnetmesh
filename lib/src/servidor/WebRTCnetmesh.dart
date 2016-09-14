@@ -18,14 +18,17 @@ class WebRTCnetmesh {
   WebRTCNetwork([String path, int port]) {
     server = new Servidor(path, port);
     server.onNuevoWebSocket.listen(_manejadorNuevosClientes);
+    identity.es_servidor = true;
+    identity.nombre = "servidor";
+    identity.id_sesion = 0;
   }
 
   /// Handles the sending of both the information and the destinatary supplied
   send(to, data) {
-    DestinatariosMensaje desde = DestinatariosMensaje.SERVIDOR;
+    int desde = identity.id_sesion;
     Identidad para;
-    Mensaje msj;
     Cliente medio;
+    Mensaje msj;
     switch (to.runtimeType) {
       case Cliente:
         para = to.identidad_remota;
@@ -44,10 +47,14 @@ class WebRTCnetmesh {
         medio = searchClient(id_busqueda);
         para = medio.identidad_remota;
         break;
+
+      default:
+        throw new Exception("Tipo de to (${to.runtimeType}) no manejado");
     }
 
     switch (data.runtimeType) {
       case Mensaje:
+        medio = searchClient((data as Mensaje).id_emisor);
         msj = data;
         break;
 
@@ -62,10 +69,22 @@ class WebRTCnetmesh {
       case Comando:
         msj = new MensajeComando(desde, para, data);
         break;
+
+      default:
+        throw new Exception("Tipo de data (${data.runtimeType}) no manejado");
     }
+
+    if (medio == null)
+      throw new Exception("Hubo un lindo error por acá :/");
+    else
+      medio.enviarMensaje(msj);
   }
 
-  sendAll(Mensaje msj) {}
+  sendAll(Mensaje msj) {
+    clients.forEach((c) {
+      send(c, msj);
+    });
+  }
 
   int get totalClients => clients.length;
 
@@ -108,15 +127,20 @@ class WebRTCnetmesh {
     }
   }
 
-  Cliente searchClient(Identidad identity) {
+  Cliente searchClient(id) {
     try {
-      return clients.singleWhere((c) => c.identidad_remota == identity);
+      if (id is int)
+        return clients.singleWhere((c) => c.identidad_remota.id_sesion == id);
+      else if (id is Identidad)
+        return clients.singleWhere((c) => c.identidad_remota == id);
+      else
+        throw new Exception("Usa un int o una Identidad, pls");
     } on StateError {
       return null;
     }
   }
 
-  int _contador_sesiones = 0;
+  int _contador_sesiones = 1;
   void _manejadorNuevosClientes(WebSocket ws) {
     Cliente cliente = new Cliente(ws, identity);
     cliente.identidad_remota.id_sesion = _contador_sesiones++;

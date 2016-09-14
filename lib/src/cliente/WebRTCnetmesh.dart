@@ -90,8 +90,10 @@ class WebRTCnetmesh {
             break;
           case InformacionAPI.NUEVO_USUARIO:
             Identidad id = (informacion as InfoUsuario).usuario;
-            Par par = _crearPar(id);
-            par.mensaje_inicio_conexion();
+            if (identity != id) {
+              Par par = _crearPar(id);
+              par.mensaje_inicio_conexion();
+            }
             break;
           case InformacionAPI.CAMBIO_USUARIO:
             Par par =
