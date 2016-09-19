@@ -9,3 +9,4 @@ library WebRTCnetmesh_server;
 export 'src/WebRTCnetmesh_base.dart';
 export 'src/servidor/Cliente.dart';
 export 'src/servidor/Servidor.dart';
+export 'src/servidor/WebRTCnetmesh.dart';

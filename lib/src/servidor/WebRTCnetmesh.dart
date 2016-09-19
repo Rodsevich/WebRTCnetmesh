@@ -13,13 +13,26 @@ import 'package:WebRTCnetmesh/src/Falta.dart';
 class WebRTCnetmesh {
   Identidad identity;
   Servidor server;
-  List<Cliente> clients;
+  List<Cliente> clients = new List();
 
-  WebRTCNetwork([String path, int port]) {
+  int get totalClients => clients.length;
+
+  int get amountClientsDirectlyConnected =>
+      clients.where((Cliente p) => p.conectadoDirectamente).length;
+
+  Stream<Mensaje> get onMessage => _controladorMensajes.stream;
+  Stream<Comando> get onCommand => _controladorComandos.stream;
+  Stream<Identidad> get onNewConnection => _controladorNuevasConexiones.stream;
+
+  StreamController _controladorMensajes = new StreamController();
+  StreamController _controladorComandos = new StreamController();
+  StreamController _controladorNuevasConexiones = new StreamController();
+
+  WebRTCnetmesh([String path, int port]) {
     server = new Servidor(path, port);
     server.onNuevoWebSocket.listen(_manejadorNuevosClientes);
+    identity = new Identidad("servidor");
     identity.es_servidor = true;
-    identity.nombre = "servidor";
     identity.id_sesion = 0;
   }
 
@@ -52,30 +65,32 @@ class WebRTCnetmesh {
         throw new Exception("Tipo de to (${to.runtimeType}) no manejado");
     }
 
-    switch (data.runtimeType) {
-      case Mensaje:
-        medio = searchClient((data as Mensaje).id_emisor);
-        msj = data;
-        break;
+    if(data is Mensaje) {
+      medio = searchClient((data as Mensaje).id_emisor);
+      msj = data;
+    }else{
+      switch (data.runtimeType) {
+        case Falta:
+          msj = new MensajeFalta(desde, para, data);
+          break;
 
-      case Falta:
-        msj = new MensajeFalta(desde, para, data);
-        break;
+        case Informacion:
+          msj = new MensajeInformacion(desde, para, data);
+          break;
 
-      case Informacion:
-        msj = new MensajeInformacion(desde, para, data);
-        break;
+        case Comando:
+          msj = new MensajeComando(desde, para, data);
+          break;
 
-      case Comando:
-        msj = new MensajeComando(desde, para, data);
-        break;
-
-      default:
-        throw new Exception("Tipo de data (${data.runtimeType}) no manejado");
+        default:
+          throw new Exception("Tipo de data (${data.runtimeType}) no manejado");
+      }
     }
-
-    if (medio == null)
+    if (medio == null){
+      // print(data.toString());
+      print(data.runtimeType);
       throw new Exception("Hubo un lindo error por acá :/");
+    }
     else
       medio.enviarMensaje(msj);
   }
@@ -85,15 +100,6 @@ class WebRTCnetmesh {
       send(c, msj);
     });
   }
-
-  int get totalClients => clients.length;
-
-  int get amountClientsDirectlyConnected =>
-      clients.where((Cliente p) => p.conectadoDirectamente).length;
-
-  Stream<Mensaje> onMessage;
-  Stream<Comando> onCommand;
-  Stream<Identidad> onNewConnection;
 
   void _manejadorMensajes(Mensaje msj, Cliente emisor) {
     switch (msj.tipo) {
@@ -105,6 +111,7 @@ class WebRTCnetmesh {
           clients.forEach((c) {
             usuarios.usuarios.add(c.identidad_remota);
           });
+          print(usuarios.toString());
           emisor.enviarMensaje(new MensajeInformacion(
               identity, emisor.identidad_remota, usuarios));
           InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
@@ -148,5 +155,6 @@ class WebRTCnetmesh {
       _manejadorMensajes(msj, cliente);
     });
     clients.add(cliente);
+    _controladorNuevasConexiones.add(cliente.identidad_remota);
   }
 }

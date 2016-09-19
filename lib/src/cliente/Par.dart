@@ -95,6 +95,10 @@ class Par {
         identidad_local.id_sesion, identidad_remota.id, sessionDescription);
   }
 
+  void setear_respuesta(RtcSessionDescription respuesta) {
+    _conexion.setRemoteDescription(respuesta);
+  }
+
   void setear_ice_candidate_remoto(RtcIceCandidate candidato) {
     _conexion.addIceCandidate(candidato, null, null);
   }

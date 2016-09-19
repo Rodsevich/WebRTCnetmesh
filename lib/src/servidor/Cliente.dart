@@ -20,12 +20,14 @@ class Cliente {
 
   Cliente(this._canal, Identidad identidad_local)
       : this.identidad_local = identidad_local {
+    identidad_remota = new Identidad(null);
     _notificadorMensajes = new StreamController();
     onMensaje = _notificadorMensajes.stream;
     _canal.listen(_manejarMensajes);
   }
 
   void _manejarMensajes(String input) {
+    print("Recibido como mensaje el siguiente input:\n$input");
     Mensaje mensaje = new Mensaje.desdeCodificacion(input);
     //Evitar loops
     if (mensaje.ids_intermediarios.contains(identidad_local.id_sesion)) return;

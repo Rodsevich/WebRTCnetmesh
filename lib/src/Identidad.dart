@@ -48,7 +48,8 @@ class Identidad {
 
   String get id => id_sesion.toString();
 
-  String toString() {
+  List<String> toJson() {
+    // Strinf ret;
     List<String> tmp = ["$nombre"];
     if (id_sesion != null) tmp.add("$id_sesion");
     if (id_github != null) tmp.add("g$id_github");
@@ -56,8 +57,12 @@ class Identidad {
     if (id_feis != null) tmp.add("F$id_feis");
     if (email != null) tmp.add("E$email");
     if (es_servidor) tmp.add('\$');
-    return tmp.reduce((a, b) => a += ",$b");
+    return tmp;
+    // ret = tmp.reduce((a, b) => a += ",$b");
+    // return "[$ret]";
   }
+
+  String toString() => toJson().join();
 
   bool operator ==(Identidad otra) {
     if (this.id_sesion == null || otra.id_sesion == null)

@@ -4,7 +4,7 @@ import "../Comando.dart";
 import "../Identidad.dart";
 import "../Mensaje.dart";
 import "dart:async";
-import 'dart:html';
+// import 'dart:html';
 import 'package:WebRTCnetmesh/src/Informacion.dart';
 import 'package:WebRTCnetmesh/src/Falta.dart';
 
@@ -34,14 +34,24 @@ class WebRTCnetmesh {
 
   Servidor server;
   List<Par> pairs;
+  Stream<Mensaje> get onMessage => _onMessageController.stream;
+  StreamController _onMessageController;
+  Stream<Comando> get onCommand => _onCommandController.stream;
+  StreamController _onCommandController;
+  Stream<Identidad> get onNewConnection => _onNewConnectionController.stream;
+  StreamController _onNewConnectionController;
 
   WebRTCnetmesh(Identidad local_identity, [String server_uri])
       : this._identity = local_identity {
     server = new Servidor(server_uri);
     server.onMensaje.listen(_manejadorMensajes);
     server.onConexion.listen((e) {
-      server.enviarMensaje(new MensajeSuscripcion(identity));
+      print(new MensajeSuscripcion(local_identity).toString());
+      server.enviarMensaje(new MensajeSuscripcion(local_identity));
     });
+    _onMessageController = new StreamController();
+    _onCommandController = new StreamController();
+    _onNewConnectionController = new StreamController();
   }
 
   send(to, Mensaje message) {
@@ -72,11 +82,7 @@ class WebRTCnetmesh {
   int get amountPairsDirectlyConnected =>
       pairs.where((Par p) => p.conectadoDirectamente).length;
 
-  Stream<Mensaje> onMessage;
-  Stream<Comando> onCommand;
-  Stream<Identidad> onNewConnection;
-
-  void _manejadorMensajes(Mensaje msj) {
+  Future _manejadorMensajes(Mensaje msj) async {
     switch (msj.tipo) {
       case MensajesAPI.INFORMACION:
         Informacion informacion = (msj as MensajeInformacion).informacion;
@@ -92,7 +98,10 @@ class WebRTCnetmesh {
             Identidad id = (informacion as InfoUsuario).usuario;
             if (identity != id) {
               Par par = _crearPar(id);
-              par.mensaje_inicio_conexion();
+              pairs.add(par);
+              _onNewConnectionController.add(id);
+              MensajeOfertaWebRTC oferta = await par.mensaje_inicio_conexion();
+              send(DestinatariosMensaje.SERVIDOR, oferta);
             }
             break;
           case InformacionAPI.CAMBIO_USUARIO:
@@ -107,6 +116,28 @@ class WebRTCnetmesh {
             break;
           default:
             throw new Exception("No se qué hacer con $informacion");
+        }
+        break;
+      case MensajesAPI.OFERTA_WEBRTC:
+      case MensajesAPI.RESPUESTA_WEBRTC:
+      case MensajesAPI.CANDIDATOICE_WEBRTC:
+        Par par = _buscarPar(msj.id_emisor);
+        switch (msj.tipo) {
+          case MensajesAPI.OFERTA_WEBRTC:
+            MensajeRespuestaWebRTC resp =
+                await par.mensaje_respuesta_inicio_conexion(
+                    (msj as MensajeOfertaWebRTC).oferta);
+            send(msj.id_emisor, resp);
+            break;
+          case MensajesAPI.RESPUESTA_WEBRTC:
+            par.setear_respuesta((msj as MensajeRespuestaWebRTC).respuesta);
+            break;
+          case MensajesAPI.CANDIDATOICE_WEBRTC:
+            par.setear_ice_candidate_remoto(
+                (msj as MensajeCandidatoICEWebRTC).candidato);
+            break;
+          default: //Para evitar warnings...
+            throw new Error(); //Imposible que pase
         }
         break;
       case MensajesAPI.FALTA:
@@ -126,10 +157,15 @@ class WebRTCnetmesh {
     }
   }
 
-  Par _buscarPar(Identidad id) {
+  Par _buscarPar(id) {
     Par ret;
     try {
-      ret = pairs.singleWhere((par) => par.identidad_remota == id);
+      if (id is int)
+        ret = pairs.singleWhere((par) => par.identidad_remota.id_sesion == id);
+      else if (id is Identidad)
+        ret = pairs.singleWhere((par) => par.identidad_remota == id);
+      else
+        throw new Exception("Usa un int o una Identidad, pls");
     } catch (e) {
       //no aparece o hay más de una identidad igual
       ret = null;

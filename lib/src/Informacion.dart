@@ -19,6 +19,7 @@ abstract class Informacion {
   }
 
   factory Informacion.desdeCodificacion(String codificacion) {
+    print("Decodificando... $codificacion");
     List partes = JSON.decode(codificacion);
     InformacionAPI tipo = InformacionAPI.values[partes[0]];
     List listaSerializaciones = partes[1];

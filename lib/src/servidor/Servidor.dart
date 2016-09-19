@@ -6,19 +6,16 @@ import 'dart:async';
 class Servidor {
   HttpServer _server;
   // Directory _carpetaBuild;
-  StreamController _notificadorPedidosHTML;
-  StreamController _notificadorNuevoWebSocket;
+  StreamController _notificadorPedidosHTML = new StreamController();
+  StreamController _notificadorNuevoWebSocket = new StreamController();
   Stream<HttpRequest> get onPedidoHTML => _notificadorPedidosHTML.stream;
   Stream<WebSocket> get onNuevoWebSocket => _notificadorNuevoWebSocket.stream;
 
   Servidor([String path_build = "../build", int puerto = 4040]) {
-    HttpServer
-        .bind(InternetAddress.LOOPBACK_IP_V4, puerto)
-        .then((HttpServer srv) {
+        HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 4040).then((HttpServer srv) {
+      print("HttpServer: escuchando en el 4040");
       _server = srv;
       _server.serverHeader = "Servidor hecho con Dart por Nico";
-      _notificadorPedidosHTML = new StreamController();
-      _notificadorNuevoWebSocket = new StreamController();
       _manejarPedidos();
     });
     // _carpetaBuild = new Directory(path_build);
