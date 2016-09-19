@@ -87,6 +87,8 @@ class Par {
         identidad_local.id_sesion, identidad_remota.id, sessionDescription);
   }
 
+<<<<<<< HEAD
+=======
   Future<MensajeRespuestaWebRTC> mensaje_respuesta_inicio_conexion(
       RtcSessionDescription oferta) async {
     _conexion.setRemoteDescription(oferta);
@@ -141,6 +143,7 @@ class Par {
     _canal.sendString(str);
   }
 
+>>>>>>> 65e44020112429310cfa45a4ebc303ff545f789e
   void enviarMensaje(Mensaje msj) {
     _canal.sendString(msj.toString());
   }
