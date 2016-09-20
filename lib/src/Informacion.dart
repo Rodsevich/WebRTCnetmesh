@@ -1,5 +1,5 @@
 import 'package:WebRTCnetmesh/src/Identidad.dart';
-import 'dart:convert';
+// import 'dart:convert';
 
 enum InformacionAPI {
   USUARIOS,
@@ -18,11 +18,10 @@ abstract class Informacion {
     tipo = InformacionAPI.INDEFINIDO;
   }
 
-  factory Informacion.desdeCodificacion(String codificacion) {
+  factory Informacion.desdeCodificacion(List codificacion) {
     print("Decodificando... $codificacion");
-    List partes = JSON.decode(codificacion);
-    InformacionAPI tipo = InformacionAPI.values[partes[0]];
-    List listaSerializaciones = partes[1];
+    InformacionAPI tipo = InformacionAPI.values[codificacion[0]];
+    List listaSerializaciones = codificacion.sublist(1);
     switch (tipo) {
       case InformacionAPI.USUARIOS:
         return new InfoUsuarios.desdeListaCodificada(listaSerializaciones);
@@ -45,8 +44,6 @@ abstract class Informacion {
   }
 
   String serializar();
-
-  String toString() => JSON.encode([tipo.index, serializar()]);
 }
 
 class InfoCambioUsuario extends Informacion {
@@ -63,8 +60,7 @@ class InfoCambioUsuario extends Informacion {
   }
 
   @override
-  String serializar() =>
-      JSON.encode([identidad_vieja.toString(), identidad_nueva.toString()]);
+  serializar() => [identidad_vieja, identidad_nueva];
 }
 
 /// Usuarios actualmente registrados en el sistema. Mensaje también utilizado
@@ -85,7 +81,7 @@ class InfoUsuarios extends Informacion {
   }
 
   @override
-  String serializar() => JSON.encode(usuarios);
+  serializar() => usuarios;
 }
 
 /// Usado para informar de nuevos usuarios o salidas de los mismos
@@ -103,7 +99,7 @@ class InfoUsuario extends Informacion {
   }
 
   @override
-  String serializar() => JSON.encode([usuario.toString()]);
+  serializar() => usuario;
 }
 
 class InfoTransmision extends Informacion {

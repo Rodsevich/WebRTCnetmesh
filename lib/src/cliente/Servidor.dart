@@ -36,7 +36,7 @@ class Servidor {
   }
 
   void enviarMensaje(Mensaje msj) {
-    _canal.send(msj.toString());
+    _canal.send(msj.toCodificacion());
   }
 
   void _manejadorEstablecimientoDeCanal(Event evt) {

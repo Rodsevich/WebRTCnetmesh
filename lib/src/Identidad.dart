@@ -62,7 +62,7 @@ class Identidad {
     // return "[$ret]";
   }
 
-  String toString() => toJson().join();
+  // String toString() => toJson().join();
 
   bool operator ==(Identidad otra) {
     if (this.id_sesion == null || otra.id_sesion == null)

@@ -1,19 +1,29 @@
 // Copyright (c) 2016, Nico Rodsevich. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-import 'package:WebRTCnetmesh/WebRTCnetmesh_client.dart';
+// import 'package:WebRTCnetmesh/WebRTCnetmesh_client.dart';
 import 'package:test/test.dart';
+import 'package:WebRTCnetmesh/src/Informacion.dart';
+import 'package:WebRTCnetmesh/src/Identidad.dart';
+import 'package:WebRTCnetmesh/src/Mensaje.dart';
 
 void main() {
-  group('grupo de tests de Identidad', () {
-    Awesome awesome;
+  group('grupo de tests de MensajesInformacion', () {
+    // String sorp;
+    // setUp(() {
+    //   sorp = "pp";
+    // });
+    // test('ejemplo', () {
+    //   expect(sorp == "pp", isTrue);
+    // });
 
-    setUp(() {
-      awesome = new Awesome();
-    });
+    Informacion nuevo_usuario = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
+    Identidad sorp = new Identidad("sorp");
+    MensajeInformacion msj = new Mensaje.
 
-    test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
+    test('MensajeInformacion', () {
+
+      expect(sorp == "pp", isTrue);
     });
   });
 }

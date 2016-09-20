@@ -54,6 +54,6 @@ class Cliente {
   }
 
   void enviarMensaje(Mensaje msj) {
-    _canal.add(msj.toString());
+    _canal.add(msj.toCodificacion());
   }
 }

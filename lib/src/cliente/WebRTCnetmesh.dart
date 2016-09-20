@@ -3,10 +3,12 @@ import "./Servidor.dart";
 import "../Comando.dart";
 import "../Identidad.dart";
 import "../Mensaje.dart";
+import "./Mensaje.dart";
 import "dart:async";
 // import 'dart:html';
 import 'package:WebRTCnetmesh/src/Informacion.dart';
 import 'package:WebRTCnetmesh/src/Falta.dart';
+import 'package:WebRTCnetmesh/src/cliente/Mensaje.dart';
 
 // enum WebRTCnetmeshStates {
 //   NOT_CONNECTED,
@@ -46,7 +48,7 @@ class WebRTCnetmesh {
     server = new Servidor(server_uri);
     server.onMensaje.listen(_manejadorMensajes);
     server.onConexion.listen((e) {
-      print(new MensajeSuscripcion(local_identity).toString());
+      print(new MensajeSuscripcion(local_identity));
       server.enviarMensaje(new MensajeSuscripcion(local_identity));
     });
     _onMessageController = new StreamController();

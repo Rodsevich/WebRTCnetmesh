@@ -1,4 +1,6 @@
-class Comando{}
+class Comando{
+  Comando.desdeCodificacion([a,v,s]);
+}
 // enum ComandosAPI { INDEFINIDO, CAMBIAR_SLIDE, MOSTRAR_ALERT }
 //
 // abstract class Comando {

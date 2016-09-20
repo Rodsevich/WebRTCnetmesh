@@ -65,33 +65,14 @@ class WebRTCnetmesh {
         throw new Exception("Tipo de to (${to.runtimeType}) no manejado");
     }
 
-    if(data is Mensaje) {
-      medio = searchClient((data as Mensaje).id_emisor);
-      msj = data;
-    }else{
-      switch (data.runtimeType) {
-        case Falta:
-          msj = new MensajeFalta(desde, para, data);
-          break;
+    if (data is Mensaje) medio = searchClient((data as Mensaje).id_emisor);
+    msj = Mensaje.desdeDatos(desde, para, data);
 
-        case Informacion:
-          msj = new MensajeInformacion(desde, para, data);
-          break;
-
-        case Comando:
-          msj = new MensajeComando(desde, para, data);
-          break;
-
-        default:
-          throw new Exception("Tipo de data (${data.runtimeType}) no manejado");
-      }
-    }
-    if (medio == null){
+    if (medio == null) {
       // print(data.toString());
       print(data.runtimeType);
       throw new Exception("Hubo un lindo error por acá :/");
-    }
-    else
+    } else
       medio.enviarMensaje(msj);
   }
 
@@ -111,7 +92,7 @@ class WebRTCnetmesh {
           clients.forEach((c) {
             usuarios.usuarios.add(c.identidad_remota);
           });
-          print(usuarios.toString());
+          print(usuarios.toCodificacion());
           emisor.enviarMensaje(new MensajeInformacion(
               identity, emisor.identidad_remota, usuarios));
           InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
