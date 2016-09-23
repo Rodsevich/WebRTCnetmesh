@@ -9,6 +9,7 @@ import "dart:async";
 import 'package:WebRTCnetmesh/src/Informacion.dart';
 import 'package:WebRTCnetmesh/src/Falta.dart';
 import 'package:WebRTCnetmesh/src/cliente/Mensaje.dart';
+import 'dart:developer';
 
 // enum WebRTCnetmeshStates {
 //   NOT_CONNECTED,
@@ -29,7 +30,7 @@ class WebRTCnetmesh {
     else {
       InfoCambioUsuario info = new InfoCambioUsuario(_identity, identity);
       sendAll(
-          new MensajeInformacion(_identity, DestinatariosMensaje.TODOS, info));
+          new MensajeInformacion(identity, DestinatariosMensaje.TODOS, info));
       _identity = identity;
     }
   }
@@ -43,13 +44,15 @@ class WebRTCnetmesh {
   Stream<Identidad> get onNewConnection => _onNewConnectionController.stream;
   StreamController _onNewConnectionController;
 
-  WebRTCnetmesh(Identidad local_identity, [String server_uri])
-      : this._identity = local_identity {
+  WebRTCnetmesh(Identidad local_identity, [String server_uri]) {
+    pairs = new List();
     server = new Servidor(server_uri);
     server.onMensaje.listen(_manejadorMensajes);
     server.onConexion.listen((e) {
-      print(new MensajeSuscripcion(local_identity));
-      server.enviarMensaje(new MensajeSuscripcion(local_identity));
+      local_identity.id_sesion = null; //prevenir eventuales hackeos
+      identity = local_identity;
+      //El setter de identity hará automáticamente...
+      //server.enviarMensaje(new MensajeSuscripcion(local_identity));
     });
     _onMessageController = new StreamController();
     _onCommandController = new StreamController();
@@ -85,16 +88,24 @@ class WebRTCnetmesh {
       pairs.where((Par p) => p.conectadoDirectamente).length;
 
   Future _manejadorMensajes(Mensaje msj) async {
+    //if (identity.id_sesion != null)
+    //  if(msj.id_destinatario == identity.id_Sesion)
+    //  else forward(msj)
     switch (msj.tipo) {
       case MensajesAPI.INFORMACION:
         Informacion informacion = (msj as MensajeInformacion).informacion;
         switch (informacion.tipo) {
           case InformacionAPI.USUARIOS:
             List<Identidad> ids = (informacion as InfoUsuarios).usuarios;
-            identity = ids.singleWhere((id) => id == identity);
-            ids.forEach((id) {
-              if (id != identity) _crearPar(id);
-            });
+            try {
+              identity = ids.singleWhere((id) => id == identity);
+            } catch (e) {
+              debugger();
+            } finally {
+              ids.forEach((id) {
+                if (id != identity) _crearPar(id);
+              });
+            }
             break;
           case InformacionAPI.NUEVO_USUARIO:
             Identidad id = (informacion as InfoUsuario).usuario;

@@ -59,6 +59,15 @@ class Par {
     _onMensajeController = new StreamController();
     this.onConexion = _onConexionController.stream;
     this.onMensaje = _onMensajeController.stream;
+    _conexion = new RtcPeerConnection(_configuracion, _restriccionDeMedios);
+    _conexion.onIceCandidate.listen((RtcIceCandidateEvent event) {
+      if (event.candidate != null)
+        _onMensajeController.add(new MensajeCandidatoICEWebRTC(
+            identidad_local, identidad_remota, event.candidate));
+    });
+    _canal = _conexion.createDataChannel(
+        "${identidad_local.id_sesion}-${identidad_remota.id_sesion}",
+        {"reliable": true});
     _canal.onOpen.listen((e) {
       _establecimientoConexion = new DateTime.now();
       _medidorLapsoPing =
@@ -69,17 +78,7 @@ class Par {
     _canal.onClose.listen((e) => _medidorLapsoPing.cancel());
   }
 
-  Future<MensajeOfertaWebRTC> mensaje_inicio_conexion(
-      [bool reliable = false]) async {
-    _conexion = new RtcPeerConnection(_configuracion, _restriccionDeMedios);
-    _conexion.onIceCandidate.listen((RtcIceCandidateEvent event) {
-      if (event.candidate != null)
-        _onMensajeController.add(new MensajeCandidatoICEWebRTC(
-            identidad_local.id_sesion, identidad_remota.id, event.candidate));
-    });
-    _canal = _conexion.createDataChannel(
-        "${identidad_local.id_sesion}-${identidad_remota.id_sesion}",
-        {"reliable": reliable});
+  Future<MensajeOfertaWebRTC> mensaje_inicio_conexion() async {
     RtcSessionDescription sessionDescription = await _conexion.createOffer({
       'mandatory': {'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true}
     });

@@ -1,4 +1,5 @@
 import 'package:WebRTCnetmesh/src/Identidad.dart';
+import 'dart:developer';
 // import 'dart:convert';
 
 enum InformacionAPI {
@@ -19,7 +20,6 @@ abstract class Informacion {
   }
 
   factory Informacion.desdeCodificacion(List codificacion) {
-    print("Decodificando... $codificacion");
     InformacionAPI tipo = InformacionAPI.values[codificacion[0]];
     List listaSerializaciones = codificacion.sublist(1);
     switch (tipo) {
@@ -43,7 +43,9 @@ abstract class Informacion {
     }
   }
 
-  String serializar();
+  paraSerializar();
+
+  toJson() => [this.tipo.index, paraSerializar()];
 }
 
 class InfoCambioUsuario extends Informacion {
@@ -55,12 +57,16 @@ class InfoCambioUsuario extends Informacion {
   }
 
   InfoCambioUsuario.desdeListaCodificada(List listaSerializaciones) {
-    identidad_vieja = new Identidad.desdeString(listaSerializaciones[0]);
-    identidad_nueva = new Identidad.desdeString(listaSerializaciones[1]);
+    this.tipo = InformacionAPI.CAMBIO_USUARIO;
+    //Esta hecho con exepcion a la politica, listaSerializaciones viene
+    identidad_vieja =
+        new Identidad.desdeCodificacion(listaSerializaciones[0][0]);
+    identidad_nueva =
+        new Identidad.desdeCodificacion(listaSerializaciones[0][1]);
   }
 
   @override
-  serializar() => [identidad_vieja, identidad_nueva];
+  paraSerializar() => [identidad_vieja, identidad_nueva];
 }
 
 /// Usuarios actualmente registrados en el sistema. Mensaje también utilizado
@@ -76,12 +82,13 @@ class InfoUsuarios extends Informacion {
   }
 
   InfoUsuarios.desdeListaCodificada(List listaSerializaciones) {
-    listaSerializaciones
-        .forEach((usuario) => usuarios.add(new Identidad.desdeString(usuario)));
+    this.tipo = InformacionAPI.USUARIOS;
+    listaSerializaciones.forEach(
+        (usuario) => usuarios.add(new Identidad.desdeCodificacion(usuario)));
   }
 
   @override
-  serializar() => usuarios;
+  paraSerializar() => usuarios;
 }
 
 /// Usado para informar de nuevos usuarios o salidas de los mismos
@@ -95,11 +102,11 @@ class InfoUsuario extends Informacion {
   InfoUsuario.desdeListaCodificada(
       InformacionAPI tipo, List listaSerializaciones) {
     this.tipo = tipo;
-    usuario = new Identidad.desdeString(listaSerializaciones[0]);
+    usuario = new Identidad.desdeCodificacion(listaSerializaciones[0]);
   }
 
   @override
-  serializar() => usuario;
+  paraSerializar() => usuario;
 }
 
 class InfoTransmision extends Informacion {
@@ -109,10 +116,12 @@ class InfoTransmision extends Informacion {
   }
 
   InfoTransmision.desdeListaCodificada(
-      InformacionAPI tipo, List listaSerializaciones) {}
+      InformacionAPI tipo, List listaSerializaciones) {
+    this.tipo = tipo;
+  }
 
   @override
-  String serializar() {
+  String paraSerializar() {
     // TODO: implement serializar
   }
 }

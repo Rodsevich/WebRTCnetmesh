@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 class Identidad {
   int id_sesion;
   String _nombre;
@@ -21,10 +23,13 @@ class Identidad {
   }
 
   Identidad(String this._nombre);
-  Identidad.desdeString(String codificacion) {
-    codificacion = codificacion.substring(1, codificacion.length - 1);
+  Identidad.desdeCodificacion(codificacion) {
+    if (codificacion is List) codificacion = codificacion.join(',');
+    if ((codificacion as String).startsWith("["))
+      codificacion = codificacion.substring(1, codificacion.length - 1);
     List<String> vals = codificacion.split(',');
     nombre = vals[0];
+    debugger(when: nombre == "qq");
     if (vals.length >= 2) id_sesion = int.parse(vals[1]);
     for (int i = 2; i < vals.length; i++)
       switch (vals[i][0]) {
@@ -48,10 +53,10 @@ class Identidad {
 
   String get id => id_sesion.toString();
 
-  List<String> toJson() {
+  List toJson() {
     // Strinf ret;
-    List<String> tmp = ["$nombre"];
-    if (id_sesion != null) tmp.add("$id_sesion");
+    List tmp = ["$nombre"];
+    if (id_sesion != null) tmp.add(id_sesion);
     if (id_github != null) tmp.add("g$id_github");
     if (id_goog != null) tmp.add("G$id_goog");
     if (id_feis != null) tmp.add("F$id_feis");
@@ -62,7 +67,7 @@ class Identidad {
     // return "[$ret]";
   }
 
-  // String toString() => toJson().join();
+  // String toString() => toJson().join(',');
 
   bool operator ==(Identidad otra) {
     if (this.id_sesion == null || otra.id_sesion == null)

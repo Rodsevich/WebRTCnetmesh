@@ -1,0 +1,14 @@
+platforms:
+- vm
+# - dartium
+# - content-shell
+
+# tags:
+#   #Usado solo cuando se requiere explícita interacción con la web
+#   dartium:
+#
+#   #Para la parte q incluya dart:io
+#   vm:
+#
+#   #Para la parte q incluya dart:html y pueda correr sin interacción
+#   content-shell:

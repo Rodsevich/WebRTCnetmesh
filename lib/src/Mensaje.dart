@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'Identidad.dart';
 import 'Informacion.dart';
 import 'Falta.dart';
@@ -73,31 +74,27 @@ abstract class Mensaje {
 
   /// Decodifica un mensaje recibido desde un remoto en su clase correspondiente
   factory Mensaje.desdeDatos(desde, para, dato) {
-    switch (dato.runtimeType) {
-      case Falta:
-        return new MensajeFalta(desde, para, dato);
-        break;
-
-      case Informacion:
-        return new MensajeInformacion(desde, para, dato);
-        break;
-
-      case Comando:
-        return new MensajeComando(desde, para, dato);
-        break;
-
-      default:
-        throw new Exception("Tipo de dato (${dato.runtimeType}) no manejado");
-    }
+    if (dato is Mensaje) {
+      dato.id_emisor = desde;
+      dato._id_receptor = para;
+      return dato;
+    } else if (dato is Falta)
+      return new MensajeFalta(desde, para, dato);
+    else if (dato is Informacion)
+      return new MensajeInformacion(desde, para, dato);
+    else if (dato is Comando)
+      return new MensajeComando(desde, para, dato);
+    else
+      throw new Exception("Tipo de dato (${dato.runtimeType}) no manejado");
   }
 
   /// Decodifica un mensaje recibido desde un remoto en su clase correspondiente
   factory Mensaje.desdeCodificacion(String json) {
     //agregando los [] removidos al momento de codificarlos
     List msjDecodificado = JSON.decode("[$json]");
-    List info_direccionamiento = msjDecodificado[0];
-    MensajesAPI tipo = MensajesAPI.values[msjDecodificado[1]];
-    List msjEspecifico = msjDecodificado.sublist(2);
+    List info_direccionamiento = msjDecodificado.sublist(0, 3); // end exclusive
+    MensajesAPI tipo = MensajesAPI.values[msjDecodificado[3]];
+    List msjEspecifico = msjDecodificado.sublist(4);
     switch (tipo) {
       case MensajesAPI.COMANDO:
         return new MensajeComando.desdeDecodificacion(
@@ -148,11 +145,11 @@ abstract class Mensaje {
   MensajesAPI decodificacionMensajeAPI(int index) => MensajesAPI.values[index];
 
   List get informacion_direccionamiento =>
-      [this.id_emisor, this.id_receptor, this.ids_intermediarios];
+      [this._id_emisor, this._id_receptor, this.ids_intermediarios];
 
   void set informacion_direccionamiento(List info) {
-    this.id_emisor = info[0];
-    this.id_receptor = info[1];
+    this._id_emisor = info[0];
+    this._id_receptor = info[1];
     if (info[2] == null)
       this.ids_intermediarios = new List();
     else
@@ -165,12 +162,17 @@ abstract class Mensaje {
 
   /// Codificación eficiente para ser enviada por los canales de comunicación
   String toCodificacion() {
+    // debugger(when: this is MensajeInformacion &&
+    //     (this as MensajeInformacion).informacion is InfoCambioUsuario);
+    String sGral = JSON.encode(informacion_direccionamiento);
     String sEsp = JSON.encode(_serializacionPropia());
-    String sGral = JSON.encode([informacion_direccionamiento, this.tipo.index]);
     //Le volamos los [] extremos que es al pedo mandarlos por redundantes
     sGral = sGral.substring(1, sGral.length - 1);
     sEsp = sEsp.substring(1, sEsp.length - 1);
-    return "$sGral,$sEsp";
+    String sorp = "$sGral,${this.tipo.index},$sEsp";
+    // debugger(when: this is MensajeInformacion &&
+    //     (this as MensajeInformacion).informacion is InfoCambioUsuario);
+    return sorp;
   }
 }
 
@@ -188,11 +190,11 @@ class MensajeSuscripcion extends Mensaje {
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = MensajesAPI.SUSCRIPCION;
-    this.identidad = new Identidad.desdeString(msjEspecifico[0]);
+    this.identidad = new Identidad.desdeCodificacion(msjEspecifico[0]);
   }
 
   @override
-  _serializacionPropia() => [identidad];
+  List _serializacionPropia() => [identidad];
 }
 
 /// Comando para que se ejecute funcionalidad remotamente
@@ -212,7 +214,7 @@ class MensajeComando extends Mensaje {
   }
 
   @override
-  _serializacionPropia() => [comando];
+  List _serializacionPropia() => [comando];
 }
 
 /// Los _metadatos_ que mantienen vivo al sistema con, justamente, actualizaciones de Informaciones
@@ -231,8 +233,8 @@ class MensajeInformacion extends Mensaje {
     this.informacion = new Informacion.desdeCodificacion(msjEspecifico);
   }
 
-  @override
-  _serializacionPropia() => [informacion.toCodificacion()];
+  @override //Ya devuelve una lista asi q no hace falta encapsular en otros []
+  List _serializacionPropia() => informacion.toJson();
 }
 
 /// Informe de un fallo: COsas que se pretendía que fueran unas, pero son otras
@@ -251,7 +253,7 @@ class MensajeFalta extends Mensaje {
   }
 
   @override
-  _serializacionPropia() => [falta];
+  List _serializacionPropia() => [falta];
 }
 
 /// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
@@ -273,7 +275,7 @@ class MensajeInteraccion extends Mensaje {
   }
 
   @override
-  _serializacionPropia() => [id_interaccion, valores];
+  List _serializacionPropia() => [id_interaccion, valores];
 }
 
 /// Mensaje enviado con iniciativa para medir el tiempo de respuesta futuro
@@ -292,7 +294,7 @@ class MensajePing extends Mensaje {
   }
 
   @override
-  _serializacionPropia() => [indice];
+  List _serializacionPropia() => [indice];
 }
 
 /// Mensaje enviado responsivamente para medir el tiempo de respuesta definitivamente
@@ -313,5 +315,5 @@ class MensajePong extends Mensaje {
       : this(msj.id_receptor, msj.id_emisor.toString(), msj.indice);
 
   @override
-  _serializacionPropia() => [indice];
+  List _serializacionPropia() => [indice];
 }

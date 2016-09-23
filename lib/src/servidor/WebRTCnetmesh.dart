@@ -38,6 +38,7 @@ class WebRTCnetmesh {
 
   /// Handles the sending of both the information and the destinatary supplied
   send(to, data) {
+    //Hay algo q no me convence... Si me llaman de un sendAll?
     int desde = identity.id_sesion;
     Identidad para;
     Cliente medio;
@@ -65,36 +66,42 @@ class WebRTCnetmesh {
         throw new Exception("Tipo de to (${to.runtimeType}) no manejado");
     }
 
-    if (data is Mensaje) medio = searchClient((data as Mensaje).id_emisor);
-    msj = Mensaje.desdeDatos(desde, para, data);
+    if (data is Mensaje && medio == null)
+      medio = searchClient((data as Mensaje).id_receptor);
+    msj = new Mensaje.desdeDatos(desde, para, data);
 
     if (medio == null) {
-      // print(data.toString());
-      print(data.runtimeType);
       throw new Exception("Hubo un lindo error por acá :/");
     } else
       medio.enviarMensaje(msj);
   }
 
   sendAll(Mensaje msj) {
+    //No se si deberia mandar un mensaje con DestinatariosMensaje.TODOS
+    // invariante... Por lo pronto no se está mandando asi
     clients.forEach((c) {
       send(c, msj);
     });
+  }
+
+  _reenviar(Mensaje msj) {
+    if (msj.ids_intermediarios.last != identity.id_sesion)
+      msj.ids_intermediarios.add(identity.id_sesion);
+    searchClient(msj.id_receptor).enviarMensaje(msj);
   }
 
   void _manejadorMensajes(Mensaje msj, Cliente emisor) {
     switch (msj.tipo) {
       case MensajesAPI.SUSCRIPCION:
         if (searchClient((msj as MensajeSuscripcion).identidad) == null) {
-          InfoUsuarios usuarios = new InfoUsuarios();
+          InfoUsuarios info_usuarios = new InfoUsuarios();
           emisor.identidad_remota.nombre =
               (msj as MensajeSuscripcion).identidad.nombre;
           clients.forEach((c) {
-            usuarios.usuarios.add(c.identidad_remota);
+            info_usuarios.usuarios.add(c.identidad_remota);
           });
-          print(usuarios.toCodificacion());
           emisor.enviarMensaje(new MensajeInformacion(
-              identity, emisor.identidad_remota, usuarios));
+              identity, emisor.identidad_remota, info_usuarios));
           InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
           info.usuario = (msj as MensajeSuscripcion).identidad;
           sendAll(new MensajeInformacion(
@@ -111,7 +118,7 @@ class WebRTCnetmesh {
       case MensajesAPI.INDEFINIDO:
       default:
         throw new Exception(
-            "El cliente envió un mensaje desconocido (no se qué hacer)");
+            "El cliente envió un mensaje '${msj.runtimeType}' desconocido (no se qué hacer)");
     }
   }
 
