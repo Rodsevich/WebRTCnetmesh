@@ -93,10 +93,17 @@ class WebRTCnetmesh {
   void _manejadorMensajes(Mensaje msj, Cliente emisor) {
     switch (msj.tipo) {
       case MensajesAPI.SUSCRIPCION:
-        if (searchClient((msj as MensajeSuscripcion).identidad) == null) {
+        Identidad id_pretendida = (msj as MensajeSuscripcion).identidad;
+        if (searchClient(id_pretendida) == null) {
           InfoUsuarios info_usuarios = new InfoUsuarios();
-          emisor.identidad_remota.nombre =
-              (msj as MensajeSuscripcion).identidad.nombre;
+          try {
+            emisor.identidad_remota.nombre =
+                (msj as MensajeSuscripcion).identidad.nombre;
+          } catch (e) {
+            FaltaNombreMalFormado falta =
+                new FaltaNombreMalFormado(id_pretendida.nombre, e.toString());
+            send(emisor, falta);
+          }
           clients.forEach((c) {
             info_usuarios.usuarios.add(c.identidad_remota);
           });

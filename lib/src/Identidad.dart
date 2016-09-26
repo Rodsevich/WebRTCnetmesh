@@ -33,22 +33,22 @@ class Identidad {
     if (vals.length >= 2) id_sesion = int.parse(vals[1]);
     for (int i = 2; i < vals.length; i++)
       switch (vals[i][0]) {
-      case '\$':
-        this.es_servidor = true;
-        break;
-      case 'g':
-        id_github = vals[i].substring(1);
-        break;
-      case 'F':
-        id_feis = vals[i].substring(1);
-        break;
-      case 'G':
-        id_goog = vals[i].substring(1);
-        break;
-      case 'E':
-        email = vals[i].substring(1);
-        break;
-    }
+        case '\$':
+          this.es_servidor = true;
+          break;
+        case 'g':
+          id_github = vals[i].substring(1);
+          break;
+        case 'F':
+          id_feis = vals[i].substring(1);
+          break;
+        case 'G':
+          id_goog = vals[i].substring(1);
+          break;
+        case 'E':
+          email = vals[i].substring(1);
+          break;
+      }
   }
 
   String get id => id_sesion.toString();
@@ -67,7 +67,7 @@ class Identidad {
     // return "[$ret]";
   }
 
-  // String toString() => toJson().join(',');
+  String toString() => toJson().join(',');
 
   bool operator ==(Identidad otra) {
     if (this.id_sesion == null || otra.id_sesion == null)

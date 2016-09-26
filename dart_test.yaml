@@ -1,7 +1,10 @@
+timeout: 3m
 platforms:
 - vm
+- content-shell
 # - dartium
-# - content-shell
+
+concurrency: 2
 
 # tags:
 #   #Usado solo cuando se requiere explícita interacción con la web
