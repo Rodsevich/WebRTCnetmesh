@@ -24,37 +24,41 @@ class Identidad {
 
   Identidad(String this._nombre);
   Identidad.desdeCodificacion(codificacion) {
+    if (!(codificacion is List || codificacion is String))
+      throw new Exception("que hago con un ${codificacion.runtimeType}?");
     if (codificacion is List) codificacion = codificacion.join(',');
-    if ((codificacion as String).startsWith("["))
-      codificacion = codificacion.substring(1, codificacion.length - 1);
+    if ((codificacion as String).startsWith("(")) {
+      if ((codificacion as String).endsWith(")"))
+        codificacion = codificacion.substring(1, codificacion.length - 1);
+      else
+        throw new Exception("Algo muy raro pasó O.o");
+    }
     List<String> vals = codificacion.split(',');
-    nombre = vals[0];
-    debugger(when: nombre == "qq");
-    if (vals.length >= 2) id_sesion = int.parse(vals[1]);
+    this.nombre = vals[0];
+    if (vals.length >= 2) this.id_sesion = int.parse(vals[1]);
     for (int i = 2; i < vals.length; i++)
       switch (vals[i][0]) {
         case '\$':
           this.es_servidor = true;
           break;
         case 'g':
-          id_github = vals[i].substring(1);
+          this.id_github = vals[i].substring(1);
           break;
         case 'F':
-          id_feis = vals[i].substring(1);
+          this.id_feis = vals[i].substring(1);
           break;
         case 'G':
-          id_goog = vals[i].substring(1);
+          this.id_goog = vals[i].substring(1);
           break;
         case 'E':
-          email = vals[i].substring(1);
+          this.email = vals[i].substring(1);
           break;
       }
   }
 
   String get id => id_sesion.toString();
 
-  List toJson() {
-    // Strinf ret;
+  List paraSerializar() {
     List tmp = ["$nombre"];
     if (id_sesion != null) tmp.add(id_sesion);
     if (id_github != null) tmp.add("g$id_github");
@@ -63,11 +67,10 @@ class Identidad {
     if (email != null) tmp.add("E$email");
     if (es_servidor) tmp.add('\$');
     return tmp;
-    // ret = tmp.reduce((a, b) => a += ",$b");
-    // return "[$ret]";
   }
 
-  String toString() => toJson().join(',');
+  String toString() => "(${paraSerializar().join(',')})";
+  String toJson() => toString();
 
   bool operator ==(Identidad otra) {
     if (this.id_sesion == null || otra.id_sesion == null)

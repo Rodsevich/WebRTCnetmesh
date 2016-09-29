@@ -30,7 +30,7 @@ void main() {
   }, skip: "no implementado todavia");
 
   group('MensajesFalta', () {
-    group('Nombre no disponible', () {
+    group('FaltaNombreNoDisponible', () {
       test('Codificacion', () {
         Identidad id = new Identidad("sorpi");
         Falta nombreNoDisponible = new FaltaNombreNoDisponible(id);

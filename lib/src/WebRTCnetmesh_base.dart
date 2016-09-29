@@ -4,3 +4,25 @@
 import "Mensaje.dart";
 import "Comando.dart";
 import "Informacion.dart";
+
+/// Usada para estandarizar el proceso de codificacion del objeto para su envio
+/// eficiente por la red
+abstract class Codificable<API> {
+  API tipo;
+  serializacionPropia();
+
+  List paraSerializar() {
+    List ret = [this.tipo.index];
+    if (serializacionPropia() == null) return ret;
+    var sPropia = serializacionPropia();
+    if (sPropia is List) {
+      sPropia.forEach((item) {
+        ret.add(serializacionPropia());
+      });
+    } else
+      ret.add(sPropia);
+    return ret;
+  }
+
+  List toJson() => paraSerializar();
+}

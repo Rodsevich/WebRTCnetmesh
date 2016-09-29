@@ -20,7 +20,7 @@ class MensajeOfertaWebRTC extends Mensaje {
   }
 
   @override
-  _serializacionPropia() => [oferta.sdp];
+  serializacionPropia() => oferta.sdp;
 }
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
@@ -42,7 +42,7 @@ class MensajeRespuestaWebRTC extends Mensaje {
   }
 
   @override
-  _serializacionPropia() => [respuesta.sdp];
+  serializacionPropia() => respuesta.sdp;
 }
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
@@ -67,6 +67,6 @@ class MensajeCandidatoICEWebRTC extends Mensaje {
   }
 
   @override
-  _serializacionPropia() =>
+  serializacionPropia() =>
       [candidato.candidate, candidato.sdpMid, candidato.sdpMLineIndex];
 }

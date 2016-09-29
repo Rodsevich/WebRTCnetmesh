@@ -4,6 +4,7 @@ import 'Identidad.dart';
 import 'Informacion.dart';
 import 'Falta.dart';
 import 'package:WebRTCnetmesh/src/Comando.dart';
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 // import "cliente/Mensaje.dart"
 //     show MensajeOfertaWebRTC, MensajeRespuestaWebRTC, MensajeCandidatoICEWebRTC;
 
@@ -25,8 +26,7 @@ enum MensajesAPI {
 /// un usuario específico
 enum DestinatariosMensaje { SERVIDOR, TODOS }
 
-abstract class Mensaje {
-  MensajesAPI tipo;
+abstract class Mensaje extends Codificable<MensajesAPI> {
   int _id_emisor;
 
   int get id_emisor => _id_emisor;
@@ -136,13 +136,13 @@ abstract class Mensaje {
     informacion_direccionamiento = info_direccionamiento;
   }
 
-  int codificacionMensajeAPI(MensajesAPI msj) {
-    List<MensajesAPI> vals = MensajesAPI.values;
-    for (var i in vals) if (msj == vals[i]) return i;
-    return MensajesAPI.INDEFINIDO.index;
-  }
-
-  MensajesAPI decodificacionMensajeAPI(int index) => MensajesAPI.values[index];
+  // int codificacionMensajeAPI(MensajesAPI msj) {
+  //   List<MensajesAPI> vals = MensajesAPI.values;
+  //   for (var i in vals) if (msj == vals[i]) return i;
+  //   return MensajesAPI.INDEFINIDO.index;
+  // }
+  //
+  // MensajesAPI decodificacionMensajeAPI(int index) => MensajesAPI.values[index];
 
   List get informacion_direccionamiento =>
       [this._id_emisor, this._id_receptor, this.ids_intermediarios];
@@ -150,22 +150,15 @@ abstract class Mensaje {
   void set informacion_direccionamiento(List info) {
     this._id_emisor = info[0];
     this._id_receptor = info[1];
-    if (info[2] == null)
-      this.ids_intermediarios = new List();
-    else
-      this.ids_intermediarios = info[2];
+    if (info[2] != null) this.ids_intermediarios = info[2];
   }
-
-  /// Metodo implementado por cada Mensaje para devolver una lista de parametros
-  /// propios de cada uno
-  List _serializacionPropia();
 
   /// Codificación eficiente para ser enviada por los canales de comunicación
   String toCodificacion() {
     // debugger(when: this is MensajeInformacion &&
     //     (this as MensajeInformacion).informacion is InfoCambioUsuario);
     String sGral = JSON.encode(informacion_direccionamiento);
-    String sEsp = JSON.encode(_serializacionPropia());
+    String sEsp = JSON.encode(paraSerializar());
     //Le volamos los [] extremos que es al pedo mandarlos por redundantes
     sGral = sGral.substring(1, sGral.length - 1);
     sEsp = sEsp.substring(1, sEsp.length - 1);
@@ -174,6 +167,9 @@ abstract class Mensaje {
     //     (this as MensajeInformacion).informacion is InfoCambioUsuario);
     return sorp;
   }
+
+  toJson() =>
+      throw new Exception("No uses Json con Mensajes, usa toCodificacion()");
 }
 
 /// Mensaje enviado por el cliente para que el Servidor tenga su información
@@ -194,7 +190,7 @@ class MensajeSuscripcion extends Mensaje {
   }
 
   @override
-  List _serializacionPropia() => [identidad];
+  serializacionPropia() => identidad;
 }
 
 /// Comando para que se ejecute funcionalidad remotamente
@@ -214,7 +210,7 @@ class MensajeComando extends Mensaje {
   }
 
   @override
-  List _serializacionPropia() => [comando];
+  serializacionPropia() => comando;
 }
 
 /// Los _metadatos_ que mantienen vivo al sistema con, justamente, actualizaciones de Informaciones
@@ -234,7 +230,7 @@ class MensajeInformacion extends Mensaje {
   }
 
   @override //Ya devuelve una lista asi q no hace falta encapsular en otros []
-  List _serializacionPropia() => informacion.toJson();
+  serializacionPropia() => informacion;
 }
 
 /// Informe de un fallo: COsas que se pretendía que fueran unas, pero son otras
@@ -253,7 +249,7 @@ class MensajeFalta extends Mensaje {
   }
 
   @override
-  List _serializacionPropia() => [falta];
+  serializacionPropia() => falta;
 }
 
 /// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
@@ -275,7 +271,7 @@ class MensajeInteraccion extends Mensaje {
   }
 
   @override
-  List _serializacionPropia() => [id_interaccion, valores];
+  serializacionPropia() => [id_interaccion, valores];
 }
 
 /// Mensaje enviado con iniciativa para medir el tiempo de respuesta futuro
@@ -294,7 +290,7 @@ class MensajePing extends Mensaje {
   }
 
   @override
-  List _serializacionPropia() => [indice];
+  serializacionPropia() => indice;
 }
 
 /// Mensaje enviado responsivamente para medir el tiempo de respuesta definitivamente
@@ -315,5 +311,5 @@ class MensajePong extends Mensaje {
       : this(msj.id_receptor, msj.id_emisor.toString(), msj.indice);
 
   @override
-  List _serializacionPropia() => [indice];
+  serializacionPropia() => indice;
 }

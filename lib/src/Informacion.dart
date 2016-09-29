@@ -1,4 +1,5 @@
 import 'package:WebRTCnetmesh/src/Identidad.dart';
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 import 'dart:developer';
 // import 'dart:convert';
 
@@ -12,9 +13,7 @@ enum InformacionAPI {
   INDEFINIDO,
 }
 
-abstract class Informacion {
-  InformacionAPI tipo;
-
+abstract class Informacion extends Codificable<InformacionAPI> {
   Informacion() {
     tipo = InformacionAPI.INDEFINIDO;
   }
@@ -24,28 +23,26 @@ abstract class Informacion {
     List listaSerializaciones = codificacion.sublist(1);
     switch (tipo) {
       case InformacionAPI.USUARIOS:
-        return new InfoUsuarios.desdeListaCodificada(listaSerializaciones);
+        return new InfoUsuarios.desdeCodificacionPropia(listaSerializaciones);
         break;
       case InformacionAPI.NUEVO_USUARIO:
       case InformacionAPI.SALIDA_USUARIO:
-        return new InfoUsuario.desdeListaCodificada(tipo, listaSerializaciones);
+        return new InfoUsuario.desdeCodificacionPropia(
+            tipo, listaSerializaciones);
         break;
       case InformacionAPI.CAMBIO_USUARIO:
-        return new InfoCambioUsuario.desdeListaCodificada(listaSerializaciones);
+        return new InfoCambioUsuario.desdeCodificacionPropia(
+            listaSerializaciones);
         break;
       case InformacionAPI.NUEVA_TRANSMISION:
       case InformacionAPI.FIN_TRANSMISION:
-        return new InfoTransmision.desdeListaCodificada(
+        return new InfoTransmision.desdeCodificacionPropia(
             tipo, listaSerializaciones);
       case InformacionAPI.INDEFINIDO:
       default:
         throw new Exception("Indefinido, no se qué hacer");
     }
   }
-
-  paraSerializar();
-
-  toJson() => [this.tipo.index, paraSerializar()];
 }
 
 class InfoCambioUsuario extends Informacion {
@@ -56,17 +53,15 @@ class InfoCambioUsuario extends Informacion {
     this.tipo = InformacionAPI.CAMBIO_USUARIO;
   }
 
-  InfoCambioUsuario.desdeListaCodificada(List listaSerializaciones) {
+  InfoCambioUsuario.desdeCodificacionPropia(List listaSerializaciones) {
     this.tipo = InformacionAPI.CAMBIO_USUARIO;
     //Esta hecho con exepcion a la politica, listaSerializaciones viene
-    identidad_vieja =
-        new Identidad.desdeCodificacion(listaSerializaciones[0][0]);
-    identidad_nueva =
-        new Identidad.desdeCodificacion(listaSerializaciones[0][1]);
+    identidad_vieja = new Identidad.desdeCodificacion(listaSerializaciones[0]);
+    identidad_nueva = new Identidad.desdeCodificacion(listaSerializaciones[1]);
   }
 
   @override
-  paraSerializar() => [identidad_vieja, identidad_nueva];
+  serializacionPropia() => [identidad_vieja, identidad_nueva];
 }
 
 /// Usuarios actualmente registrados en el sistema. Mensaje también utilizado
@@ -81,14 +76,14 @@ class InfoUsuarios extends Informacion {
     this.tipo = InformacionAPI.USUARIOS;
   }
 
-  InfoUsuarios.desdeListaCodificada(List listaSerializaciones) {
+  InfoUsuarios.desdeCodificacionPropia(List listaSerializaciones) {
     this.tipo = InformacionAPI.USUARIOS;
     listaSerializaciones.forEach(
         (usuario) => usuarios.add(new Identidad.desdeCodificacion(usuario)));
   }
 
   @override
-  paraSerializar() => usuarios;
+  serializacionPropia() => usuarios;
 }
 
 /// Usado para informar de nuevos usuarios o salidas de los mismos
@@ -99,14 +94,14 @@ class InfoUsuario extends Informacion {
     this.tipo = tipo;
   }
 
-  InfoUsuario.desdeListaCodificada(
+  InfoUsuario.desdeCodificacionPropia(
       InformacionAPI tipo, List listaSerializaciones) {
     this.tipo = tipo;
     usuario = new Identidad.desdeCodificacion(listaSerializaciones[0]);
   }
 
   @override
-  paraSerializar() => usuario;
+  serializacionPropia() => usuario;
 }
 
 class InfoTransmision extends Informacion {
@@ -115,13 +110,13 @@ class InfoTransmision extends Informacion {
     this.tipo = tipo;
   }
 
-  InfoTransmision.desdeListaCodificada(
+  InfoTransmision.desdeCodificacionPropia(
       InformacionAPI tipo, List listaSerializaciones) {
     this.tipo = tipo;
   }
 
   @override
-  String paraSerializar() {
+  String serializacionPropia() {
     // TODO: implement serializar
   }
 }
