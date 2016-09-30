@@ -4,11 +4,21 @@
 
 // import 'package:WebRTCnetmesh/WebRTCnetmesh_client.dart';
 import 'dart:math';
+import 'dart:convert';
 import 'package:test/test.dart';
 import 'package:WebRTCnetmesh/src/Informacion.dart';
 import 'package:WebRTCnetmesh/src/Identidad.dart';
 import 'package:WebRTCnetmesh/src/Mensaje.dart';
 import 'package:WebRTCnetmesh/src/Falta.dart';
+
+class MensajeBase extends Mensaje {
+  MensajeBase(emisor, receptor) : super(emisor, receptor);
+
+  @override
+  serializacionPropia() {
+    return null;
+  }
+}
 
 void main() {
   String codificacion;
@@ -19,6 +29,44 @@ void main() {
   Mensaje crearMensaje(dato) {
     return new Mensaje.desdeDatos(id_emisor, id_receptor, dato);
   }
+
+  group('MensajeBase', () {
+    test('Codificacion sin intermediarios', () {
+      MensajeBase mb = new MensajeBase(id_emisor, id_receptor);
+      codificacion = mb.toCodificacion();
+      List partes = codificacion.split(',');
+      expect(codificacion, startsWith("$id_emisor,$id_receptor"));
+      if (JSON.decode(partes[2]) is List)
+        fail("Incluye intermediarios vacios en la codificacion");
+      expect(partes[2], equals("${MensajesAPI.INDEFINIDO.index}"));
+    });
+    test('Decodificacion sin intermediarios', () {
+      print(codificacion);
+      expect(
+          () => new Mensaje.desdeCodificacion(codificacion), throwsException);
+      expect(codificacion,
+          equals("$id_emisor,$id_receptor,${MensajesAPI.INDEFINIDO.index}"));
+    });
+    test('Codificacion con intermediarios', () {
+      MensajeBase mb = new MensajeBase(id_emisor, id_receptor);
+      mb.ids_intermediarios = [1, 2, 3];
+      codificacion = mb.toCodificacion();
+      List partes = JSON.decode("[$codificacion]");
+      expect(codificacion, startsWith("$id_emisor,$id_receptor"));
+      List inters = partes[2];
+      expect(inters, new isInstanceOf<List>());
+      expect(inters, equals([1, 2, 3]));
+      expect(partes[3], equals(MensajesAPI.INDEFINIDO.index));
+    });
+    test('Decodificacion con intermediarios', () {
+      expect(
+          () => new Mensaje.desdeCodificacion(codificacion), throwsException);
+      expect(
+          codificacion,
+          equals(
+              "$id_emisor,$id_receptor,[1,2,3],${MensajesAPI.INDEFINIDO.index}"));
+    });
+  });
 
   group('MensajesInteraccion', () {
     test('Codificacion', () {
@@ -51,6 +99,7 @@ void main() {
         codificacion = mensaje.toCodificacion();
       });
       test('Decodificacion', () {
+        print(codificacion);
         Mensaje msj = new Mensaje.desdeCodificacion(codificacion);
         expect(msj, new isInstanceOf<MensajeFalta>());
 

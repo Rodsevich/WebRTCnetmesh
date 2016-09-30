@@ -92,9 +92,10 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
   factory Mensaje.desdeCodificacion(String json) {
     //agregando los [] removidos al momento de codificarlos
     List msjDecodificado = JSON.decode("[$json]");
-    List info_direccionamiento = msjDecodificado.sublist(0, 3); // end exclusive
-    MensajesAPI tipo = MensajesAPI.values[msjDecodificado[3]];
-    List msjEspecifico = msjDecodificado.sublist(4);
+    int cant = (msjDecodificado[2] is List) ? 3 : 2;
+    List info_direccionamiento = msjDecodificado.sublist(0, cant);
+    MensajesAPI tipo = MensajesAPI.values[msjDecodificado[cant]];
+    List msjEspecifico = msjDecodificado.sublist(cant + 2);
     switch (tipo) {
       case MensajesAPI.COMANDO:
         return new MensajeComando.desdeDecodificacion(
@@ -114,11 +115,11 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
       case MensajesAPI.INFORMACION:
         return new MensajeInformacion.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
-      case MensajesAPI.FALTA:
-        return new MensajeFalta.desdeDecodificacion(
-            info_direccionamiento, msjEspecifico);
       case MensajesAPI.INTERACCION:
         return new MensajeInteraccion.desdeDecodificacion(
+            info_direccionamiento, msjEspecifico);
+      case MensajesAPI.FALTA:
+        return new MensajeFalta.desdeDecodificacion(
             info_direccionamiento, msjEspecifico);
       case MensajesAPI.PING:
         return new MensajePing.desdeDecodificacion(
@@ -144,8 +145,11 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
   //
   // MensajesAPI decodificacionMensajeAPI(int index) => MensajesAPI.values[index];
 
-  List get informacion_direccionamiento =>
-      [this._id_emisor, this._id_receptor, this.ids_intermediarios];
+  List get informacion_direccionamiento {
+    List ret = [this._id_emisor, this._id_receptor];
+    if (this.ids_intermediarios.isNotEmpty) ret.add(this.ids_intermediarios);
+    return ret;
+  }
 
   void set informacion_direccionamiento(List info) {
     this._id_emisor = info[0];
@@ -162,10 +166,11 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
     //Le volamos los [] extremos que es al pedo mandarlos por redundantes
     sGral = sGral.substring(1, sGral.length - 1);
     sEsp = sEsp.substring(1, sEsp.length - 1);
-    String sorp = "$sGral,${this.tipo.index},$sEsp";
+    return "$sGral,$sEsp";
+    // String sorp = "$sGral,${this.tipo.index},$sEsp";
     // debugger(when: this is MensajeInformacion &&
     //     (this as MensajeInformacion).informacion is InfoCambioUsuario);
-    return sorp;
+    // return sorp;
   }
 
   toJson() =>
