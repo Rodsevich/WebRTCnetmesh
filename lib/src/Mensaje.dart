@@ -64,7 +64,7 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
           "Usá un String, int, Identidad o DestinatariosMensaje, pls.");
   }
 
-  List<int> ids_intermediarios = new List();
+  List<int> ids_intermediarios = [];
 
   Mensaje(emisor, receptor) {
     this.id_emisor = emisor;
@@ -95,7 +95,7 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
     int cant = (msjDecodificado[2] is List) ? 3 : 2;
     List info_direccionamiento = msjDecodificado.sublist(0, cant);
     MensajesAPI tipo = MensajesAPI.values[msjDecodificado[cant]];
-    List msjEspecifico = msjDecodificado.sublist(cant + 2);
+    List msjEspecifico = msjDecodificado.sublist(cant + 1);
     switch (tipo) {
       case MensajesAPI.COMANDO:
         return new MensajeComando.desdeDecodificacion(
@@ -154,7 +154,7 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
   void set informacion_direccionamiento(List info) {
     this._id_emisor = info[0];
     this._id_receptor = info[1];
-    if (info[2] != null) this.ids_intermediarios = info[2];
+    if (info.length > 2 && info[2] != null) this.ids_intermediarios = info[2];
   }
 
   /// Codificación eficiente para ser enviada por los canales de comunicación
@@ -250,7 +250,7 @@ class MensajeFalta extends Mensaje {
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = MensajesAPI.FALTA;
-    this.falta = msjEspecifico[0];
+    this.falta = new Falta.desdeCodificacion(msjEspecifico);
   }
 
   @override

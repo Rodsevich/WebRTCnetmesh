@@ -7,8 +7,14 @@ version: 0.0.1
 environment:
   sdk: '>=1.0.0 <2.0.0'
 
-#dependencies:
-#  lib_name: any
+dependencies:
+ w_transport: any
+ meta: any
 
 dev_dependencies:
-  test: '>=0.12.0 <0.13.0'
+  test: '>=0.12.0'
+  coverage: "^0.7.3"
+  dart_dev: "^1.0.0"
+  dart_style: ">=0.1.8 <0.3.0"
+  dartdoc: "^0.4.0"
+  scheduled_test: '>=0.12.0'

@@ -9,4 +9,6 @@ main() {
   servidor.onMessage.listen((Mensaje msj) {
     print("Recibido un ${msj.runtimeType}");
   });
+//  servidor.onNewConnection.listen(print);
+  servidor.onCommand.listen((_) => print("Un comando! :O"));
 }

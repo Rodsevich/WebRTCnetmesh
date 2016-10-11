@@ -13,7 +13,7 @@ import 'package:WebRTCnetmesh/src/Falta.dart';
 class WebRTCnetmesh {
   Identidad identity;
   Servidor server;
-  List<Cliente> clients = new List();
+  List<Cliente> clients = [];
 
   int get totalClients => clients.length;
 
@@ -93,31 +93,14 @@ class WebRTCnetmesh {
   void _manejadorMensajes(Mensaje msj, Cliente emisor) {
     switch (msj.tipo) {
       case MensajesAPI.SUSCRIPCION:
-        Identidad id_pretendida = (msj as MensajeSuscripcion).identidad;
-        if (searchClient(id_pretendida) == null) {
-          InfoUsuarios info_usuarios = new InfoUsuarios();
-          try {
-            emisor.identidad_remota.nombre =
-                (msj as MensajeSuscripcion).identidad.nombre;
-          } catch (e) {
-            FaltaNombreMalFormado falta =
-                new FaltaNombreMalFormado(id_pretendida.nombre, e.toString());
-            send(emisor, falta);
-          }
-          clients.forEach((c) {
-            info_usuarios.usuarios.add(c.identidad_remota);
-          });
-          emisor.enviarMensaje(new MensajeInformacion(
-              identity, emisor.identidad_remota, info_usuarios));
-          InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
-          info.usuario = (msj as MensajeSuscripcion).identidad;
-          sendAll(new MensajeInformacion(
-              identity, DestinatariosMensaje.TODOS, info));
-        } else {
-          FaltaNombreNoDisponible falta;
-          Cliente cliente = searchClient((msj as MensajeSuscripcion).identidad);
-          falta = new FaltaNombreNoDisponible(cliente.identidad_remota);
-          send(emisor.identidad_remota, falta);
+        try {
+          _suscribirNuevoCliente(msj, emisor); //puede tirar faltas
+          emisor.enviarMensaje(_estadoActualUsuarios(emisor));
+          _propagarNuevaSuscripcion((msj as MensajeSuscripcion).identidad);
+        } on FaltaNombreMalFormado catch (falta) {
+          send(emisor, falta);
+        } on FaltaNombreNoDisponible catch (falta) {
+          send(emisor, falta);
         }
         break;
       case MensajesAPI.COMANDO:
@@ -151,5 +134,34 @@ class WebRTCnetmesh {
     });
     clients.add(cliente);
     _controladorNuevasConexiones.add(cliente.identidad_remota);
+  }
+
+  _suscribirNuevoCliente(MensajeSuscripcion msj, Cliente emisor) {
+    Identidad id_pretendida = msj.identidad;
+
+    if (searchClient(id_pretendida) != null) {
+      //La Identidad pretendida ya está registrada
+      Cliente cliente = searchClient(msj.identidad);
+      throw new FaltaNombreNoDisponible(cliente.identidad_remota);
+    } else {
+      try {
+        emisor.identidad_remota.nombre = msj.identidad.nombre;
+      } catch (e) {
+        throw new FaltaNombreMalFormado(id_pretendida.nombre, e.toString());
+      }
+    }
+  }
+
+  MensajeInformacion _estadoActualUsuarios(Cliente emisor) {
+    InfoUsuarios info_usuarios = new InfoUsuarios();
+    for (Cliente c in clients) info_usuarios.usuarios.add(c.identidad_remota);
+    return new MensajeInformacion(
+        identity, emisor.identidad_remota, info_usuarios);
+  }
+
+  _propagarNuevaSuscripcion(Identidad nuevoId) {
+    InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
+    info.usuario = nuevoId;
+    sendAll(new MensajeInformacion(identity, DestinatariosMensaje.TODOS, info));
   }
 }

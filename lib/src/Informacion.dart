@@ -70,7 +70,7 @@ class InfoCambioUsuario extends Informacion {
 ///   - info de transmisiones vigentes
 ///   - info de interconexiones vigentes
 class InfoUsuarios extends Informacion {
-  List<Identidad> usuarios = new List();
+  List<Identidad> usuarios = [];
 
   InfoUsuarios() {
     this.tipo = InformacionAPI.USUARIOS;

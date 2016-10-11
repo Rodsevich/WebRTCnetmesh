@@ -52,8 +52,4 @@ class Cliente {
       _ultimaComunicacion = new DateTime.now();
     }
   }
-
-  void enviarMensaje(Mensaje msj) {
-    _canal.add(msj.toCodificacion());
-  }
 }

@@ -45,7 +45,7 @@ class WebRTCnetmesh {
   StreamController _onNewConnectionController;
 
   WebRTCnetmesh(Identidad local_identity, [String server_uri]) {
-    pairs = new List();
+    pairs = [];
     server = new Servidor(server_uri);
     server.onMensaje.listen(_manejadorMensajes);
     server.onConexion.listen((e) {
@@ -77,9 +77,7 @@ class WebRTCnetmesh {
   sendAll(Mensaje message) {
     message.id_receptor = DestinatariosMensaje.TODOS;
     server.enviarMensaje(message);
-    pairs
-        .where((p) => p.conectadoDirectamente)
-        .forEach((p) => p.enviarMensaje(message));
+    pairs.where(conectadoDirectamente).forEach(enviarMensaje(message));
   }
 
   int get totalPairs => pairs.length;

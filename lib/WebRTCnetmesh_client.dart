@@ -4,7 +4,7 @@
 /// Support for doing something awesome.
 ///
 /// More dartdocs go here.
-library WebRTCnetmesh_client;
+library WebRTCnetmesh.client;
 
 export 'src/WebRTCnetmesh_base.dart';
 export 'src/cliente/WebRTCnetmesh.dart';

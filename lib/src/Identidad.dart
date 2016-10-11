@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 class Identidad {
@@ -24,7 +25,7 @@ class Identidad {
 
   Identidad(String this._nombre);
   Identidad.desdeCodificacion(codificacion) {
-    if (!(codificacion is List || codificacion is String))
+    if (codificacion is! List && codificacion is! String)
       throw new Exception("que hago con un ${codificacion.runtimeType}?");
     if (codificacion is List) codificacion = codificacion.join(',');
     if ((codificacion as String).startsWith("(")) {
@@ -72,10 +73,13 @@ class Identidad {
   String toString() => "(${paraSerializar().join(',')})";
   String toJson() => toString();
 
-  bool operator ==(Identidad otra) {
-    if (this.id_sesion == null || otra.id_sesion == null)
-      return this.nombre == otra.nombre;
-    else
-      return this.id_sesion == otra.id_sesion;
+  bool operator ==(otra) {
+    if (otra.runtimeType is Identidad) {
+      if (this.id_sesion == null || otra.id_sesion == null)
+        return this.nombre == otra.nombre;
+      else
+        return this.id_sesion == otra.id_sesion;
+    } else
+      return false;
   }
 }

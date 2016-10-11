@@ -20,7 +20,8 @@ abstract class Falta extends Codificable<FaltasAPI> {
   factory Falta.desdeCodificacion(List codificacion) {
     switch (FaltasAPI.values[codificacion[0]]) {
       case FaltasAPI.NOMBRE_NO_DISPONIBLE:
-        return new FaltaNombreNoDisponible(codificacion[1]);
+        Identidad id = new Identidad.desdeCodificacion(codificacion[1]);
+        return new FaltaNombreNoDisponible(id);
         break;
       case FaltasAPI.NOMBRE_MAL_FORMADO:
         return new FaltaNombreMalFormado(codificacion[1], codificacion[2]);

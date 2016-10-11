@@ -4,6 +4,8 @@ import "./Mensaje.dart";
 import "../Mensaje.dart";
 import "../Identidad.dart";
 
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
+
 Map _configuracion = {
   "iceServers": const [
     const {'url': 'stun:stun.l.google.com:19302'},
@@ -23,7 +25,7 @@ Map _restriccionDeMedios = {
 
 /// Objeto que el cliente tendrá por cada conexión con otro [Par], que lo
 /// proveerá de funcionalidad de alto nivel para facilitar la comunicación
-class Par {
+class Par extends Asociado {
   final Identidad identidad_local;
   Identidad identidad_remota;
 
@@ -42,7 +44,7 @@ class Par {
   StreamController<Event> _onConexionController;
   StreamController<Mensaje> _onMensajeController;
 
-  Duration lapsoMedicionPing = new Duration(seconds: 1);
+  Duration _lapsoMedicionPing = new Duration(seconds: 1);
 
   bool get conectadoDirectamente => _canal.negotiated;
 
@@ -71,10 +73,10 @@ class Par {
     _canal.onOpen.listen((e) {
       _establecimientoConexion = new DateTime.now();
       _medidorLapsoPing =
-          new Timer.periodic(lapsoMedicionPing, _calcularLatencia);
+          new Timer.periodic(_lapsoMedicionPing, _calcularLatencia);
       _onConexionController.add(e);
     });
-    _canal.onMessage.listen(_manejadorMensajes);
+    _canal.onMessage.listen((me) => _manejadorMensajes(me.data));
     _canal.onClose.listen((e) => _medidorLapsoPing.cancel());
   }
 
@@ -103,8 +105,7 @@ class Par {
     _conexion.addIceCandidate(candidato, null, null);
   }
 
-  void _manejadorMensajes(MessageEvent mensaje_llano) {
-    Mensaje mensaje = new Mensaje.desdeCodificacion(mensaje_llano.data);
+  void _manejadorMensajes(Mensaje mensaje) {
     //Evitar loops
     if (mensaje.ids_intermediarios.contains(identidad_local.id_sesion)) return;
     if (mensaje.id_receptor == this.identidad_local.id_sesion) {

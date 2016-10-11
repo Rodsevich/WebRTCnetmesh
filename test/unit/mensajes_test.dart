@@ -5,6 +5,7 @@
 // import 'package:WebRTCnetmesh/WebRTCnetmesh_client.dart';
 import 'dart:math';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:test/test.dart';
 import 'package:WebRTCnetmesh/src/Informacion.dart';
 import 'package:WebRTCnetmesh/src/Identidad.dart';
@@ -41,7 +42,6 @@ void main() {
       expect(partes[2], equals("${MensajesAPI.INDEFINIDO.index}"));
     });
     test('Decodificacion sin intermediarios', () {
-      print(codificacion);
       expect(
           () => new Mensaje.desdeCodificacion(codificacion), throwsException);
       expect(codificacion,
@@ -68,15 +68,6 @@ void main() {
     });
   });
 
-  group('MensajesInteraccion', () {
-    test('Codificacion', () {
-      //skip
-    });
-    test('Decodificacion', () {
-      //skip
-    });
-  }, skip: "no implementado todavia");
-
   group('MensajesFalta', () {
     group('FaltaNombreNoDisponible', () {
       test('Codificacion', () {
@@ -95,11 +86,10 @@ void main() {
                 .identidad_no_disponible
                 .nombre,
             equals("sorpi"));
-
+        // debugger();
         codificacion = mensaje.toCodificacion();
       });
       test('Decodificacion', () {
-        print(codificacion);
         Mensaje msj = new Mensaje.desdeCodificacion(codificacion);
         expect(msj, new isInstanceOf<MensajeFalta>());
 
@@ -112,15 +102,6 @@ void main() {
       });
     });
   });
-
-  group('MensajesComando', () {
-    test('Codificacion', () {
-      //skip
-    });
-    test('Decodificacion', () {
-      //skip
-    });
-  }, skip: true);
 
   group('MensajesInformacion', () {
     test('Codificacion', () {
@@ -145,4 +126,22 @@ void main() {
       expect(identidad.id_sesion, equals(9));
     });
   });
+
+  group('MensajesInteraccion', () {
+    test('Codificacion', () {
+      //skip
+    });
+    test('Decodificacion', () {
+      //skip
+    });
+  }, skip: "no implementado todavia");
+
+  group('MensajesComando', () {
+    test('Codificacion', () {
+      //skip
+    });
+    test('Decodificacion', () {
+      //skip
+    });
+  }, skip: true);
 }
