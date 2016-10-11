@@ -4,8 +4,6 @@ import "./Mensaje.dart";
 import "../Mensaje.dart";
 import "../Identidad.dart";
 
-import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
-
 Map _configuracion = {
   "iceServers": const [
     const {'url': 'stun:stun.l.google.com:19302'},
@@ -25,7 +23,7 @@ Map _restriccionDeMedios = {
 
 /// Objeto que el cliente tendrá por cada conexión con otro [Par], que lo
 /// proveerá de funcionalidad de alto nivel para facilitar la comunicación
-class Par extends Asociado {
+class Par {
   final Identidad identidad_local;
   Identidad identidad_remota;
 

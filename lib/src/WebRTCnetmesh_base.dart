@@ -1,8 +1,6 @@
 // Copyright (c) 2016, Nico Rodsevich. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-import 'package:WebRTCnetmesh/src/Mensaje.dart';
-import "package:w_transport/w_transport.dart";
 import 'package:meta/meta.dart' show protected;
 
 /// Usada para estandarizar el proceso de codificacion del objeto para su envio
@@ -31,16 +29,4 @@ abstract class Codificable<API> {
   }
 
   toJson() => paraSerializar();
-}
-
-abstract class Asociado {
-  @protected
-  WSocket canal;
-
-  void enviarMensaje(Mensaje msj) {
-    canal.add(msj.toCodificacion());
-  }
-
-  @protected
-  void manejadorMensajes(Mensaje msj);
 }
