@@ -77,7 +77,7 @@ class WebRTCnetmesh {
   sendAll(Mensaje message) {
     message.id_receptor = DestinatariosMensaje.TODOS;
     server.enviarMensaje(message);
-    pairs.where(conectadoDirectamente).forEach(enviarMensaje(message));
+    pairs.where((Par par) => par.conectadoDirectamente).forEach((Par p) => p.enviarMensaje(message));
   }
 
   int get totalPairs => pairs.length;
@@ -98,7 +98,8 @@ class WebRTCnetmesh {
             try {
               identity = ids.singleWhere((id) => id == identity);
             } catch (e) {
-              debugger();
+              print("error por aca");
+              // debugger();
             } finally {
               ids.forEach((id) {
                 if (id != identity) _crearPar(id);
