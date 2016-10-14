@@ -1,5 +1,4 @@
-import 'dart:html' show RtcIceCandidate, RtcSessionDescription;
-import "../Mensaje.dart";
+part of WebRTCNetmesh.client;
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
 /// WebAPP --> Cliente --> Servidor

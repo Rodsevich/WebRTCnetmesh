@@ -19,10 +19,14 @@ void main() {
 
   String codificacionJSON = JSON.encode(id_full);
   String codificacionString = id_full.toString();
-  print(codificacionJSON);
-  print(codificacionString);
+  test("JSON codifica a un String igual que .toString()",(){
+    expect(codificacionJSON, new isInstanceOf<String>());
+    expect(codificacionJSON, equals(codificacionString));
+  }, testOn: "browser,vm");
   test('Identidad parcialmente llena', () {
     Identidad id = new Identidad.desdeCodificacion(codificacionString);
+    expect(id.nombre, equals("nombre"));
+    expect(id.id_sesion, equals(2));
   });
   test('Identidad completamente llena', () {
     Identidad id = new Identidad.desdeCodificacion(codificacionString);

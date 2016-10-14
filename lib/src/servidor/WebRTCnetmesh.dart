@@ -149,6 +149,7 @@ class WebRTCnetmesh {
       } catch (e) {
         throw new FaltaNombreMalFormado(id_pretendida.nombre, e.toString());
       }
+      emisor.identidad_remota = id_pretendida;
     }
   }
 

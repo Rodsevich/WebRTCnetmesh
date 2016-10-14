@@ -1,7 +1,15 @@
 // Copyright (c) 2016, Nico Rodsevich. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
+library WebRTCNetmesh.base;
 
 import 'package:meta/meta.dart' show protected;
+
+export 'Comando.dart';
+export 'Falta.dart';
+export 'Identidad.dart';
+export 'Informacion.dart';
+export 'Mensaje.dart';
+
 
 /// Usada para estandarizar el proceso de codificacion del objeto para su envio
 /// eficiente por la red

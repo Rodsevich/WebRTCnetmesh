@@ -1,5 +1,3 @@
-import 'package:WebRTCnetmesh/src/Identidad.dart';
-import 'dart:convert';
 import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 
 enum FaltasAPI {

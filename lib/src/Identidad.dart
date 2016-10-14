@@ -1,6 +1,6 @@
-import 'dart:convert';
-import 'dart:developer';
+import 'dart:async';
 
+///Clase interna al sistema que maneja toda la lógica
 class Identidad {
   int id_sesion;
   String _nombre;
@@ -9,6 +9,9 @@ class Identidad {
   String id_github;
   String email;
   bool es_servidor = false;
+  Stream<Map<String, String>> get onCambios => _cambiosController.stream;
+
+  StreamController _cambiosController = new StreamController.broadcast();
 
   String get nombre => _nombre;
 

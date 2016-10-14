@@ -9,7 +9,7 @@ class Cliente {
   String id, pseudonimo;
   WebSocket _canal;
   StreamController _notificadorMensajes;
-  Stream<Mensaje> onMensaje;
+  Stream<Mensaje> get onMensaje => _notificadorMensajes.stream;
 
   DateTime _ultimaComunicacion;
 
@@ -22,7 +22,6 @@ class Cliente {
       : this.identidad_local = identidad_local {
     identidad_remota = new Identidad(null);
     _notificadorMensajes = new StreamController();
-    onMensaje = _notificadorMensajes.stream;
     _canal.listen(_manejarMensajes);
   }
 
@@ -51,5 +50,9 @@ class Cliente {
       _notificadorMensajes.add(mensaje);
       _ultimaComunicacion = new DateTime.now();
     }
+  }
+
+  enviarMensaje(Mensaje msj){
+    _canal.add(msj.toCodificacion());
   }
 }

@@ -1,6 +1,4 @@
-import "dart:html";
-import "dart:async";
-import "../Mensaje.dart";
+part of WebRTCNetmesh.client;
 
 /// Objeto que tendrá el cliente para facilitar las comunicaciones con el
 /// servidor a través de websockets (utilizados también para establecer WebRTC)

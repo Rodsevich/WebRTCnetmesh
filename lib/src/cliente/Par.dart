@@ -1,8 +1,4 @@
-import "dart:html";
-import "dart:async";
-import "./Mensaje.dart";
-import "../Mensaje.dart";
-import "../Identidad.dart";
+part of WebRTCNetmesh.client;
 
 Map _configuracion = {
   "iceServers": const [
