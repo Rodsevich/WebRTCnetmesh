@@ -3,9 +3,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:WebRTCnetmesh/WebRTCnetmesh_client.dart';
-import 'package:WebRTCnetmesh/Identity.dart';
-import 'package:WebRTCnetmesh/src/Informacion.dart';
+import 'package:WebRTCnetmesh/src/Identidad.dart';
 import 'package:WebRTCnetmesh/src/Mensaje.dart';
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 import 'package:WebRTCnetmesh/src/cliente/WebSocketDebugger.dart';
 import "package:scheduled_test/scheduled_test.dart";
 
@@ -15,13 +15,24 @@ void main() {
   Identity identity = new Identity("cliente");
   WebRTCnetmesh cliente;
 
-  test("Suscripcion", () {
+  test("Tira exception si no hay conexión con el servidor",(){
+    //Debería intemntar crear el cliente acá y que falle normalmente
+    //después de eso, recién ahi crear el debugger
+  }, skip: "Todavía no implementado");
+  test("El cliente se reconecta... ¿con client.reconnect()?",(){
+    //client.reconnect() ???
+  },skip: "no implementar todavía...");
+  test("Envío de Msj de Suscripcion", () {
     String codificacion = new MensajeSuscripcion(identidad).toCodificacion();
     Future msj = schedule(() => debugger.proximoMensajeARecibir);
 
     cliente = new WebRTCnetmesh(identity); //Dispara Suscripcion namas crearse
     schedule(() => expect(msj, completion(equals(codificacion))));
   });
+  test("Suscripcion errónea (nombre ya ocupado)",(){
+    // El debugger Debe mandar una suscripcion de donde saca el id_sesion
+    //y después un FaltaNombreNoDisponible que hace throwear
+  },skip: "implementar pronto");
   test("Checkeo creación de Usuarios", () {
     InfoUsuarios infoUsuarios = new InfoUsuarios();
     infoUsuarios.usuarios

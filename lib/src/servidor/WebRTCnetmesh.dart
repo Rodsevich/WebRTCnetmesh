@@ -1,19 +1,16 @@
-import "./Cliente.dart";
-import "./Servidor.dart";
-import "../Comando.dart";
-import "../Identidad.dart";
-import "../Mensaje.dart";
 import "dart:async";
 import "dart:io";
-import 'package:WebRTCnetmesh/src/Informacion.dart';
-import 'package:WebRTCnetmesh/src/Falta.dart';
+
+import "./Cliente.dart";
+import "./Servidor.dart";
+
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 
 /// Clase que el usuario final deberá instanciar para usar la librería cómoda
 ///y modularmente
-class WebRTCnetmesh {
+class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
   Identidad identity;
   Servidor server;
-  List<Cliente> clients = [];
 
   int get totalClients => clients.length;
 
@@ -36,58 +33,10 @@ class WebRTCnetmesh {
     identity.id_sesion = 0;
   }
 
-  /// Handles the sending of both the information and the destinatary supplied
-  send(to, data) {
-    //Hay algo q no me convence... Si me llaman de un sendAll?
-    int desde = identity.id_sesion;
-    Identidad para;
-    Cliente medio;
-    Mensaje msj;
-    switch (to.runtimeType) {
-      case Cliente:
-        para = to.identidad_remota;
-        medio = to;
-        break;
-
-      case Identidad:
-        para = to;
-        medio = searchClient(to);
-        break;
-
-      case int:
-        //must be the session_id
-        Identidad id_busqueda = new Identidad("");
-        id_busqueda.id_sesion = to;
-        medio = searchClient(id_busqueda);
-        para = medio.identidad_remota;
-        break;
-
-      default:
-        throw new Exception("Tipo de to (${to.runtimeType}) no manejado");
-    }
-
-    if (data is Mensaje && medio == null)
-      medio = searchClient((data as Mensaje).id_receptor);
-    msj = new Mensaje.desdeDatos(desde, para, data);
-
-    if (medio == null) {
-      throw new Exception("Hubo un lindo error por acá :/");
-    } else
-      medio.enviarMensaje(msj);
-  }
-
-  sendAll(Mensaje msj) {
-    //No se si deberia mandar un mensaje con DestinatariosMensaje.TODOS
-    // invariante... Por lo pronto no se está mandando asi
-    clients.forEach((c) {
-      send(c, msj);
-    });
-  }
-
   _reenviar(Mensaje msj) {
     if (msj.ids_intermediarios.last != identity.id_sesion)
       msj.ids_intermediarios.add(identity.id_sesion);
-    searchClient(msj.id_receptor).enviarMensaje(msj);
+    search(msj.id_receptor).enviarMensaje(msj);
   }
 
   void _manejadorMensajes(Mensaje msj, Cliente emisor) {
@@ -112,7 +61,8 @@ class WebRTCnetmesh {
     }
   }
 
-  Cliente searchClient(id) {
+  @override
+  Cliente search(id) {
     try {
       if (id is int)
         return clients.singleWhere((c) => c.identidad_remota.id_sesion == id);
@@ -139,9 +89,9 @@ class WebRTCnetmesh {
   _suscribirNuevoCliente(MensajeSuscripcion msj, Cliente emisor) {
     Identidad id_pretendida = msj.identidad;
 
-    if (searchClient(id_pretendida) != null) {
+    if (search(id_pretendida) != null) {
       //La Identidad pretendida ya está registrada
-      Cliente cliente = searchClient(msj.identidad);
+      Cliente cliente = search(msj.identidad);
       throw new FaltaNombreNoDisponible(cliente.identidad_remota);
     } else {
       try {

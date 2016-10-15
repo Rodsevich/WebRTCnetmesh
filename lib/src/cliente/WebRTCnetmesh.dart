@@ -19,12 +19,11 @@ part "./Identity.dart";
 
 /// Clase que el usuario final deberá instanciar para usar la librería cómoda
 ///y modularmente
-class WebRTCnetmesh {
+class WebRTCnetmesh extends InterfazEnvioMensaje<Par>{
   Identity identity;
   Identidad _identidad;
 
   Servidor server;
-  List<Par> pairs = [];
   Stream<Mensaje> get onMessage => _onMessageController.stream;
   StreamController _onMessageController;
   Stream<Comando> get onCommand => _onCommandController.stream;
@@ -45,44 +44,20 @@ class WebRTCnetmesh {
     _onNewConnectionController = new StreamController();
   }
 
-  void _informarIdentidad([Map cambios = null]) {
+  void _informarIdentidad([CambioIdentidad cambio = null]) {
     if (_identidad.id_sesion == null) {
       send(DestinatariosMensaje.SERVIDOR, new MensajeSuscripcion(_identidad));
     } else {
-      InfoCambioUsuario info = new InfoCambioUsuario(_identidad, identity);
-      //TODO: Seguir desde acá, corrigiendo InfoCambioUsuario primero
+      InfoCambioUsuario info = new InfoCambioUsuario(cambio);
+      //TODO: Seguir desde acá, ¡corrigiendo InfoCambioUsuario primero!
       send(DestinatariosMensaje.SERVIDOR, info);
     }
-    }
   }
 
-  send(to, Mensaje message) {
-    if (to is DestinatariosMensaje) {
-      if (to == DestinatariosMensaje.SERVIDOR)
-        server.enviarMensaje(message);
-      else if (to == DestinatariosMensaje.TODOS) sendAll(message);
-      return;
-    }
-    if (to is Identidad) {
-      Par entidad = _buscarPar(to);
-      entidad.enviarMensaje(message);
-    } else
-      throw new Exception(
-          "Must be delivered to Identidad or DestinatariosMensaje");
-  }
+  int get totalEntities => entities.length;
 
-  sendAll(Mensaje message) {
-    message.id_receptor = DestinatariosMensaje.TODOS;
-    server.enviarMensaje(message);
-    pairs
-        .where((Par par) => par.conectadoDirectamente)
-        .forEach((Par p) => p.enviarMensaje(message));
-  }
-
-  int get totalPairs => pairs.length;
-
-  int get amountPairsDirectlyConnected =>
-      pairs.where((Par p) => p.conectadoDirectamente).length;
+  int get amountEntitiesDirectlyConnected =>
+      entities.where((Par p) => p.conectadoDirectamente).length;
 
   Future _manejadorMensajes(Mensaje msj) async {
     //if (identity.id_sesion != null)
@@ -116,7 +91,7 @@ class WebRTCnetmesh {
             Identidad id = (informacion as InfoUsuario).usuario;
             if (identity != id) {
               Par par = _crearPar(id);
-              pairs.add(par);
+              entities.add(par);
               _onNewConnectionController.add(id);
               MensajeOfertaWebRTC oferta = await par.mensaje_inicio_conexion();
               send(DestinatariosMensaje.SERVIDOR, oferta);
@@ -124,12 +99,12 @@ class WebRTCnetmesh {
             break;
           case InformacionAPI.CAMBIO_USUARIO:
             Par par =
-                _buscarPar((informacion as InfoCambioUsuario).identidad_vieja);
+                search((informacion as InfoCambioUsuario).identidad_vieja);
             par.identidad_remota =
                 (informacion as InfoCambioUsuario).identidad_nueva;
             break;
           case InformacionAPI.SALIDA_USUARIO:
-            pairs.removeWhere((p) =>
+            entities.removeWhere((p) =>
                 p.identidad_remota == (informacion as InfoUsuario).usuario);
             break;
           default:
@@ -139,7 +114,7 @@ class WebRTCnetmesh {
       case MensajesAPI.OFERTA_WEBRTC:
       case MensajesAPI.RESPUESTA_WEBRTC:
       case MensajesAPI.CANDIDATOICE_WEBRTC:
-        Par par = _buscarPar(msj.id_emisor);
+        Par par = search(msj.id_emisor);
         switch (msj.tipo) {
           case MensajesAPI.OFERTA_WEBRTC:
             MensajeRespuestaWebRTC resp =
@@ -175,13 +150,14 @@ class WebRTCnetmesh {
     }
   }
 
-  Par _buscarPar(id) {
+  @override
+  Par search(id) {
     Par ret;
     try {
       if (id is int)
-        ret = pairs.singleWhere((par) => par.identidad_remota.id_sesion == id);
+        ret = entities.singleWhere((par) => par.identidad_remota.id_sesion == id);
       else if (id is Identidad)
-        ret = pairs.singleWhere((par) => par.identidad_remota == id);
+        ret = entities.singleWhere((par) => par.identidad_remota == id);
       else
         throw new Exception("Usa un int o una Identidad, pls");
     } catch (e) {
@@ -194,8 +170,8 @@ class WebRTCnetmesh {
 
   Par _crearPar(Identidad id) {
     Par par = new Par(_identidad, id);
-    pairs.add(par);
-    print("par $id agregado: ${JSON.encode(pairs)}");
+    entities.add(par);
+    print("par $id agregado: ${JSON.encode(entities)}");
     par.onMensaje.listen(_manejadorMensajes);
     return par;
   }

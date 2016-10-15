@@ -1,5 +1,25 @@
 import 'dart:async';
 
+///Clase usada para representar los cambios en la(s) [Identidad]es
+class CambioIdentidad{
+  String campo;
+  var valor_nuevo;
+  var valor_viejo;
+
+  CambioIdentidad(this.campo,this.valor_viejo,this.valor_nuevo);
+  CambioIdentidad.desdeCodificacion(String codificacion){
+    this.valor_nuevo = codificacion.split(',')[0].substring(1);
+    this.valor_viejo = codificacion.split(',')[1];
+    this.campo = codificacion[0];
+  }
+
+  toJson() => toString();
+  String toString() => "$codificacion,$valor_viejo";
+
+  String get codificacion => "$campo$valor_nuevo";
+  void implementarEn(Identidad id) => id.modificarCampo(this.codificacion);
+}
+
 ///Clase interna al sistema que maneja toda la lógica
 class Identidad {
   int id_sesion;
@@ -9,9 +29,9 @@ class Identidad {
   String id_github;
   String email;
   bool es_servidor = false;
-  Stream<Map<String, String>> get onCambios => _cambiosController.stream;
+  Stream<CambioIdentidad> get onCambios => cambiosController.stream;
 
-  StreamController _cambiosController = new StreamController.broadcast();
+  StreamController cambiosController = new StreamController.broadcast();
 
   String get nombre => _nombre;
 
@@ -41,23 +61,30 @@ class Identidad {
     this.nombre = vals[0];
     if (vals.length >= 2) this.id_sesion = int.parse(vals[1]);
     for (int i = 2; i < vals.length; i++)
-      switch (vals[i][0]) {
-        case '\$':
-          this.es_servidor = true;
-          break;
-        case 'g':
-          this.id_github = vals[i].substring(1);
-          break;
-        case 'F':
-          this.id_feis = vals[i].substring(1);
-          break;
-        case 'G':
-          this.id_goog = vals[i].substring(1);
-          break;
-        case 'E':
-          this.email = vals[i].substring(1);
-          break;
-      }
+      modificarCampo(vals[i]);
+  }
+
+  void modificarCampo(String codificacion) {
+    switch (codificacion[0]) {
+      case '\$':
+        this.es_servidor = true;
+        break;
+      case 'g':
+        this.id_github = codificacion.substring(1);
+        break;
+      case 'F':
+        this.id_feis = codificacion.substring(1);
+        break;
+      case 'G':
+        this.id_goog = codificacion.substring(1);
+        break;
+      case 'E':
+        this.email = codificacion.substring(1);
+        break;
+      case 'n':
+        this.nombre = codificacion.substring(1);
+        break;
+    }
   }
 
   String get id => id_sesion.toString();

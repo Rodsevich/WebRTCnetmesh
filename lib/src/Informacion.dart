@@ -46,22 +46,18 @@ abstract class Informacion extends Codificable<InformacionAPI> {
 }
 
 class InfoCambioUsuario extends Informacion {
-  Identidad identidad_vieja;
-  Identidad identidad_nueva;
+  CambioIdentidad cambio;
 
-  InfoCambioUsuario([this.identidad_vieja, this.identidad_nueva]) {
-    this.tipo = InformacionAPI.CAMBIO_USUARIO;
-  }
+  InfoCambioUsuario(this.cambio);
 
   InfoCambioUsuario.desdeCodificacionPropia(List listaSerializaciones) {
     this.tipo = InformacionAPI.CAMBIO_USUARIO;
     //Esta hecho con exepcion a la politica, listaSerializaciones viene
-    identidad_vieja = new Identidad.desdeCodificacion(listaSerializaciones[0]);
-    identidad_nueva = new Identidad.desdeCodificacion(listaSerializaciones[1]);
+    cambio = new CambioIdentidad.desdeCodificacion(listaSerializaciones[0]);
   }
 
   @override
-  serializacionPropia() => [identidad_vieja, identidad_nueva];
+  serializacionPropia() => cambio;
 }
 
 /// Usuarios actualmente registrados en el sistema. Mensaje también utilizado
