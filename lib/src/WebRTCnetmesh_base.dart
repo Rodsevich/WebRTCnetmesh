@@ -2,6 +2,8 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 library WebRTCNetmesh.base;
 
+import 'dart:async';
+import 'package:WebRTCnetmesh/src/Comando.dart';
 import 'package:meta/meta.dart' show protected;
 import 'Identidad.dart';
 import 'Mensaje.dart';
@@ -40,19 +42,53 @@ abstract class Codificable<API> {
   toJson() => paraSerializar();
 }
 
+abstract class Asociado {
+  var canal;
+  DateTime establecimientoConexion;
+  DateTime ultimaComunicacion;
+  List<Stopwatch> muestrasLatencia = new List(60);
+  int punteroMuestrasLatencia = 0;
+  Timer medidorLapsoPing;
+
+  Duration lapsoMedicionPing = new Duration(seconds: 1);
+
+  bool conectadoDirectamente;
+
+  Duration get tiempoSinComunicacion =>
+      new DateTime.now().difference(ultimaComunicacion);
+  Duration get tiempoConectado =>
+      new DateTime.now().difference(establecimientoConexion);
+}
+
+class Associate {}
+
+abstract class Exportable<T> {
+  T _exportado;
+  T aExportable() {
+    if (_exportado == null) _exportado = new T.desdeEncubierto(this);
+    return _exportado;
+  }
+}
+
 abstract class InterfazEnvioMensaje<T> {
-  List<T> entities = [];
+  var identity;
+  List<T> associates = [];
+  Identidad identidad;
+  var servidor;
 
   /// Handles the sending of both the information and the destinatary supplied
   send(to, data) {
-    //Hay algo q no me convence... Si me llaman de un sendAll?
-    int desde = this.identity.id_sesion;
-    Identidad para;
+    int desde = this.identidad.id_sesion;
+    var para;
     T medio;
     Mensaje msj;
-    if (to.runtimeType == T) {
+    if (to is Associate) {
+      //todo: manejar errores
+      to = associates.singleWhere((T a) => (a as Exportable)._exportado = to);
+    }
+    if (to is T) {
       //No deja meter T en el switch por no ser const
-      para = to.identidad_remota;
+      para = to.identidad;
       medio = to;
     } else {
       switch (to.runtimeType) {
@@ -66,12 +102,25 @@ abstract class InterfazEnvioMensaje<T> {
           Identidad id_busqueda = new Identidad("");
           id_busqueda.id_sesion = to;
           medio = search(id_busqueda);
-          para = medio.identidad_remota;
+          para = medio.identidad;
+          break;
+
+        case DestinatariosMensaje:
+          if (to == DestinatariosMensaje.TODOS)
+            return sendAll(data);
+          else if (to == DestinatariosMensaje.SERVIDOR) {
+            para = DestinatariosMensaje.SERVIDOR;
+            medio = this.servidor;
+          }
           break;
 
         default:
           throw new Exception("Tipo de to (${to.runtimeType}) no manejado");
       }
+    }
+
+    if(data is Command){
+      //Todo: Seguir aca
     }
 
     if (data is Mensaje && medio == null)
@@ -84,35 +133,14 @@ abstract class InterfazEnvioMensaje<T> {
       medio.enviarMensaje(msj);
   }
 
-  send(to, Mensaje message) {
-    if (to is DestinatariosMensaje) {
-      if (to == DestinatariosMensaje.SERVIDOR)
-        server.enviarMensaje(message);
-      else if (to == DestinatariosMensaje.TODOS) sendAll(message);
-      return;
-    }
-    if (to is Identidad) {
-      Par entidad = _buscarPar(to);
-      entidad.enviarMensaje(message);
-    } else
-      throw new Exception(
-          "Must be delivered to Identidad or DestinatariosMensaje");
-  }
-
-  sendAll(Mensaje message) {
-    message.id_receptor = DestinatariosMensaje.TODOS;
-    server.enviarMensaje(message);
-    pairs
-        .where((Par par) => par.conectadoDirectamente)
-        .forEach((Par par) => par.enviarMensaje(message));
-  }
-
-  sendAll(Mensaje msj) {
+  sendAll(data) {
     //No se si deberia mandar un mensaje con DestinatariosMensaje.TODOS
     // invariante... Por lo pronto no se está mandando asi
-    entities.forEach((c) {
-      send(c, msj);
-    });
+    Mensaje mensaje =
+        new Mensaje.desdeDatos(identity, DestinatariosMensaje.TODOS, data);
+    associates
+        .where((a) => a.conectadoDirectamente)
+        .forEach((a) => send(a, mensaje));
   }
 
   T search(id);

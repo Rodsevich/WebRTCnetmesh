@@ -1,4 +1,6 @@
-part of WebRTCNetmesh.client;
+import 'dart:html' show RtcIceCandidate, RtcSessionDescription;
+
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 
 /// Mensaje que porta la negociacion SDP para establecer conexiones WebRTC
 /// WebAPP --> Cliente --> Servidor

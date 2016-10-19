@@ -3,10 +3,12 @@ import 'dart:async';
 import '../Mensaje.dart';
 import '../Identidad.dart';
 
-class Cliente {
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
+import 'package:meta/meta.dart';
+
+class Cliente extends Asociado with Exportable<Client>{
   final Identidad identidad_local;
   Identidad identidad_remota;
-  String id, pseudonimo;
   WebSocket _canal;
   StreamController _notificadorMensajes;
   Stream<Mensaje> get onMensaje => _notificadorMensajes.stream;
@@ -55,4 +57,15 @@ class Cliente {
   enviarMensaje(Mensaje msj){
     _canal.add(msj.toCodificacion());
   }
+}
+
+class Client {
+  Cliente _cliente;
+
+  Client(){
+    throw "Can't create; they should be taken from WebRTCNetmesh";
+  }
+
+  @visibleForTesting
+  Client.desdeEncubierto(this._cliente);
 }

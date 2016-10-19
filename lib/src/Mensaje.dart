@@ -1,10 +1,12 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'Identidad.dart';
 import 'Informacion.dart';
 import 'Falta.dart';
 import 'package:WebRTCnetmesh/src/Comando.dart';
 import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
+
+//No se puede incluir cosas del cliente porque la VM se quejaría del dart:html
+// import 'package:WebRTCnetmesh/src/cliente/Mensaje.dart';
 // import "cliente/Mensaje.dart"
 //     show MensajeOfertaWebRTC, MensajeRespuestaWebRTC, MensajeCandidatoICEWebRTC;
 
@@ -133,6 +135,7 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
     }
   }
 
+  //Usado para economizar lineas de cdigo en prximas clases heredadas de esta
   Mensaje.desdeDecodificacion(List info_direccionamiento) {
     informacion_direccionamiento = info_direccionamiento;
   }
@@ -178,7 +181,8 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
 }
 
 /// Mensaje enviado por el cliente para que el Servidor tenga su información
-/// WebAPP --> Cliente --> Servidor X-termino ahi-X
+/// WebAPP --> Cliente --> Servidor
+/// Servidor --> Cliente --> WebAPP
 class MensajeSuscripcion extends Mensaje {
   Identidad identidad;
 
@@ -211,7 +215,7 @@ class MensajeComando extends Mensaje {
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = MensajesAPI.COMANDO;
-    this.comando = new Comando.desdeCodificacion(msjEspecifico[0]);
+    this.comando = new Comando.desdeCodificacion(msjEspecifico);
   }
 
   @override

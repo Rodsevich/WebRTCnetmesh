@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
+import 'package:WebRTCnetmesh/src/cliente/WebRTCnetmesh.dart';
+
 ///Clase usada para representar los cambios en la(s) [Identidad]es
 class CambioIdentidad{
   String campo;
@@ -20,8 +23,11 @@ class CambioIdentidad{
   void implementarEn(Identidad id) => id.modificarCampo(this.codificacion);
 }
 
+///Levels of autorizations for clients in order to execute Commands
+enum Roles { ADMIN, MODERATOR, USER, }
+
 ///Clase interna al sistema que maneja toda la lógica
-class Identidad {
+class Identidad extends Exportable<Identity>{
   int id_sesion;
   String _nombre;
   String id_feis;

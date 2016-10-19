@@ -5,4 +5,5 @@
 library WebRTCnetmesh.client;
 
 export 'src/cliente/WebRTCnetmesh.dart' show WebRTCnetmesh, Identity;
+export 'src/cliente/Par.dart' show Pair;
 // export 'src/WebRTCnetmesh_base.dart' show ;

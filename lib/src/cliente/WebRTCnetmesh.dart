@@ -1,14 +1,14 @@
 library WebRTCNetmesh.client;
+
 import "dart:async";
 import 'dart:convert';
-import 'dart:developer';
-import 'dart:html' show RtcIceCandidate, RtcSessionDescription;
 
 import "../WebRTCnetmesh_base.dart";
-part "./Par.dart";
-part "./Servidor.dart";
-part "./Mensaje.dart";
-part "./Identity.dart";
+import "./Par.dart";
+import "./Servidor.dart";
+import "./Mensaje.dart";
+
+import 'package:meta/meta.dart' show visibleForTesting;
 
 // enum WebRTCnetmeshStates {
 //   NOT_CONNECTED,
@@ -16,96 +16,78 @@ part "./Identity.dart";
 //   CONNECTED
 // }
 
-
 /// Clase que el usuario final deberá instanciar para usar la librería cómoda
 ///y modularmente
-class WebRTCnetmesh extends InterfazEnvioMensaje<Par>{
+class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
   Identity identity;
-  Identidad _identidad;
 
-  Servidor server;
-  Stream<Mensaje> get onMessage => _onMessageController.stream;
-  StreamController _onMessageController;
-  Stream<Comando> get onCommand => _onCommandController.stream;
-  StreamController _onCommandController;
-  Stream<Identidad> get onNewConnection => _onNewConnectionController.stream;
-  StreamController _onNewConnectionController;
+  Stream<Command> get onCommand => onCommandController.stream;
+  Stream<Mensaje> get onInteraction => onInteractionController.stream;
+  Stream<Pair> get onNewConnection => onNewConnectionController.stream;
 
-  WebRTCnetmesh(this.identity, [String server_uri]){
-     _identidad = identity._id;
-    server = new Servidor(server_uri);
-    server.onMensaje.listen(_manejadorMensajes);
-    server.onConexion.listen((e) {
-      _informarIdentidad();
+  final List<Comando> comandos;
+
+  Identidad identidad;
+  Servidor servidor;
+  StreamController onCommandController = new StreamController.broadcast();
+  StreamController onInteractionController = new StreamController.broadcast();
+  StreamController onNewConnectionController = new StreamController.broadcast();
+
+  ClienteWebRTCnetmesh(this.identity, List<Comando> comandos,
+      [String server_uri])
+      : this.comandos = comandos {
+    identidad = identity._id;
+    servidor = new Servidor(server_uri);
+    servidor.onMensaje.listen(manejadorMensajes);
+    servidor.onConexion.listen((e) {
+      informarIdentidad();
     });
-    _identidad.onCambios.listen(_informarIdentidad);
-    _onMessageController = new StreamController();
-    _onCommandController = new StreamController();
-    _onNewConnectionController = new StreamController();
+    identidad.onCambios.listen(informarIdentidad);
   }
 
-  void _informarIdentidad([CambioIdentidad cambio = null]) {
-    if (_identidad.id_sesion == null) {
-      send(DestinatariosMensaje.SERVIDOR, new MensajeSuscripcion(_identidad));
+  void informarIdentidad([CambioIdentidad cambio = null]) {
+    if (identidad.id_sesion == null) {
+      send(DestinatariosMensaje.SERVIDOR, new MensajeSuscripcion(identidad));
     } else {
       InfoCambioUsuario info = new InfoCambioUsuario(cambio);
-      //TODO: Seguir desde acá, ¡corrigiendo InfoCambioUsuario primero!
-      send(DestinatariosMensaje.SERVIDOR, info);
+      send(DestinatariosMensaje.TODOS, info);
     }
   }
 
-  int get totalEntities => entities.length;
-
-  int get amountEntitiesDirectlyConnected =>
-      entities.where((Par p) => p.conectadoDirectamente).length;
-
-  Future _manejadorMensajes(Mensaje msj) async {
-    //if (identity.id_sesion != null)
-    //  if(msj.id_destinatario == identity.id_Sesion)
+  Future manejadorMensajes(Mensaje msj) async {
+    //if (_identidad.id_sesion != null)
+    //  if(msj.id_destinatario == _identidad.id_Sesion)
     //  else forward(msj)
     switch (msj.tipo) {
+      case MensajesAPI.SUSCRIPCION:
+        identidad = (msj as MensajeSuscripcion).identidad;
+        break;
       case MensajesAPI.INFORMACION:
         Informacion informacion = (msj as MensajeInformacion).informacion;
         switch (informacion.tipo) {
           case InformacionAPI.USUARIOS:
-            print(JSON.encode(_identidad));
-            if (_identidad.id_sesion == null) {
-              print("entro");
-              List<Identidad> ids = (informacion as InfoUsuarios).usuarios;
-              try {
-                _identidad =
-                    ids.singleWhere((Identidad id) => id == this.identity);
-              } catch (e) {
-                print("error de tipo: ${e.runtimeType}");
-                // debugger();
-              } finally {
-                print("Agregado de pares");
-                print(JSON.encode(ids));
-                ids.forEach((Identidad id) {
-                  if (id != identity) _crearPar(id);
-                });
-              }
-            }
+            List<Identidad> ids = (informacion as InfoUsuarios).usuarios;
+            ids.forEach((Identidad id) {
+              if (id != identidad) crearPar(id);
+            });
             break;
           case InformacionAPI.NUEVO_USUARIO:
             Identidad id = (informacion as InfoUsuario).usuario;
-            if (identity != id) {
-              Par par = _crearPar(id);
-              entities.add(par);
-              _onNewConnectionController.add(id);
+            if (identidad != id) {
+              Par par = crearPar(id);
+              onNewConnectionController.add(par.aExportable());
               MensajeOfertaWebRTC oferta = await par.mensaje_inicio_conexion();
-              send(DestinatariosMensaje.SERVIDOR, oferta);
+              send(par, oferta);
             }
             break;
           case InformacionAPI.CAMBIO_USUARIO:
-            Par par =
-                search((informacion as InfoCambioUsuario).identidad_vieja);
-            par.identidad_remota =
-                (informacion as InfoCambioUsuario).identidad_nueva;
+            (informacion as InfoCambioUsuario)
+                .cambio
+                .implementarEn(search(msj.id_emisor).identidad);
             break;
           case InformacionAPI.SALIDA_USUARIO:
-            entities.removeWhere((p) =>
-                p.identidad_remota == (informacion as InfoUsuario).usuario);
+            associates.removeWhere(
+                (p) => p.identidad == (informacion as InfoUsuario).usuario);
             break;
           default:
             throw new Exception("No se qué hacer con $informacion");
@@ -137,13 +119,18 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Par>{
         Falta falta = (msj as MensajeFalta).falta;
         switch (falta.tipo) {
           case FaltasAPI.NOMBRE_NO_DISPONIBLE:
-            _identidad = null;
-            throw new Exception("Identity name is already taken, set another name.");
+            identidad = null;
+            throw new Exception(
+                "Identity name is already taken, set another name.");
             break;
           default:
             throw new Exception("Tipo de falta no reconocido");
         }
         break;
+      case MensajesAPI.COMANDO:
+        Comando comando = comandos[(msj as MensajeComando).comando.indice];
+        //Todo: Seguir aca
+      break;
       default:
         throw new Exception(
             "Recibido un mensaje con tipo anomalo: ${msj.tipo}");
@@ -155,9 +142,9 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Par>{
     Par ret;
     try {
       if (id is int)
-        ret = entities.singleWhere((par) => par.identidad_remota.id_sesion == id);
+        ret = associates.singleWhere((par) => par.identidad.id_sesion == id);
       else if (id is Identidad)
-        ret = entities.singleWhere((par) => par.identidad_remota == id);
+        ret = associates.singleWhere((par) => par.identidad == id);
       else
         throw new Exception("Usa un int o una Identidad, pls");
     } catch (e) {
@@ -168,11 +155,120 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Par>{
     }
   }
 
-  Par _crearPar(Identidad id) {
-    Par par = new Par(_identidad, id);
-    entities.add(par);
-    print("par $id agregado: ${JSON.encode(entities)}");
-    par.onMensaje.listen(_manejadorMensajes);
+  Par crearPar(Identidad id) {
+    Par par = new Par(identidad, id);
+    associates.add(par);
+    print("par $id agregado: ${JSON.encode(associates)}");
+    par.onMensaje.listen(manejadorMensajes);
     return par;
   }
+}
+
+///Class that the client would use in order to have everybody informed
+class Identity {
+  Identidad _id;
+
+  bool _modificable;
+
+  Identity(String name) {
+    this._id = new Identidad(name);
+    _modificable = true;
+  }
+
+  @visibleForTesting
+  Identity.desdeEncubierto(this._id) {
+    _modificable = false; //De un Pair o algo asi q no admite modificaciones
+  }
+
+  String get name => _id.nombre;
+
+  void set name(String name) {
+    if (_modificable) {
+      CambioIdentidad cambio;
+      new CambioIdentidad('n', _id.nombre, name);
+      _id.nombre = name;
+      _id.cambiosController.add(cambio);
+    } else
+      throw "Not possible to change Identities other than yours own";
+  }
+
+  String get email => _id.email;
+
+  void set email(String email) {
+    if (_modificable) {
+      CambioIdentidad cambio;
+      new CambioIdentidad('E', _id.email, email);
+      _id.email = email;
+      _id.cambiosController.add(cambio);
+    } else
+      throw "Not possible to change Identities other than yours own";
+  }
+
+  String get facebook_id => _id.id_feis;
+
+  void set facebook_id(String facebook_id) {
+    if (_modificable) {
+      CambioIdentidad cambio;
+      new CambioIdentidad('F', _id.id_feis, facebook_id);
+      _id.id_feis = facebook_id;
+      _id.cambiosController.add(cambio);
+    } else
+      throw "Not possible to change Identities other than yours own";
+  }
+
+  String get google_id => _id.id_goog;
+
+  void set google_id(String google_id) {
+    if (_modificable) {
+      CambioIdentidad cambio;
+      new CambioIdentidad('G', _id.id_goog, google_id);
+      _id.id_goog = google_id;
+      _id.cambiosController.add(cambio);
+    } else
+      throw "Not possible to change Identities other than yours own";
+  }
+
+  String get github_id => _id.id_github;
+
+  void set github_id(String github_id) {
+    if (_modificable) {
+      CambioIdentidad cambio;
+      new CambioIdentidad('g', _id.id_github, github_id);
+      _id.id_github = github_id;
+      _id.cambiosController.add(cambio);
+    } else
+      throw "Not possible to change Identities other than yours own";
+  }
+}
+
+///Public use class to encapsulate internal logic
+class WebRTCnetmesh {
+  ClienteWebRTCnetmesh _cliente;
+
+  WebRTCnetmesh(
+      Identity identity, List<CommandImplementation> commandImplementations,
+      [String server_uri = null]) {
+    List<Comando> comandos = [];
+    for (var i = 0; i < commandImplementations.length; i++) {
+      if (commandImplementations[i] is! CommandImplementation ||
+          commandImplementations[i].runtimeType.toString() ==
+              "CommandImplementation")
+        throw new Exception("Must be a subclass of CommandImplementation");
+      comandos[i] = new Comando(commandImplementations[i], i);
+    }
+    _cliente = new ClienteWebRTCnetmesh(identity, comandos, server_uri);
+  }
+
+  Identity get identity => _cliente.identity;
+
+  List<Pair> get associates => _cliente.associates
+      .map((Par p) => p.aExportable())
+      .toList(growable: false);
+
+  send(to, data) => _cliente.send(to, data);
+  sendAll(data) => _cliente.sendAll(data);
+
+  Stream get onCommand => _cliente.onCommand;
+  Stream get onInteraction => _cliente.onInteraction;
+  Stream get onNewConnection => _cliente.onNewConnection;
 }

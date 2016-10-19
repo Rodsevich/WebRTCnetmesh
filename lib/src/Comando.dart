@@ -1,74 +1,41 @@
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
+
 class Comando{
-  Comando.desdeCodificacion([a,v,s]);
+  int indice;
+  CommandImplementation commandBody;
+
+  Comando(this.commandBody, this.indice);
+  Comando.desdeCodificacion(List codificacion){
+    this.indice = codificacion[0];
+    this.commandBody.arguments = codificacion[1];
+  }
+
+  toJson() => [indice,commandBody.arguments];
 }
-// enum ComandosAPI { INDEFINIDO, CAMBIAR_SLIDE, MOSTRAR_ALERT }
-//
-// abstract class Comando {
-//   /// variable que tendrá la referencia al objetoq ue ejecutará el comando
-//   var ejecutor;
-//   Function funcion_ejecutora;
-//   ComandosAPI tipo;
-//
-//   Comando() {
-//     tipo = ComandosAPI.INDEFINIDO;
-//   }
-//
-//   factory Comando.desdeTipo(ComandosAPI tipo) {
-//     switch (tipo) {
-//       case ComandosAPI.CAMBIAR_SLIDE:
-//         return new CambiarSlide();
-//         break;
-//       case ComandosAPI.MOSTRAR_ALERT:
-//         return new MostrarAlert();
-//         break;
-//       default:
-//     }
-//   }
-//
-//   factory Comando.desdeCodificacion(String codificacion) {
-//     return new Comando.desdeTipo(ComandosAPI.INDEFINIDO);
-//   }
-//
-//   int codificacionComandoAPI(ComandosAPI msj) {
-//     List<ComandosAPI> vals = ComandosAPI.values;
-//     for (var i in vals) if (msj == vals[i]) return i;
-//     return ComandosAPI.INDEFINIDO.index;
-//   }
-//
-//   ComandosAPI decodificacionComandoAPI(int index) => ComandosAPI.values[index];
-//
-//   ejecutar();
-// }
-// //
-// // class CambiarSlide extends Comando {
-// //   CambiarSlide(WebApp ejecutor) {
-// //     this.ejecutor = ejecutor;
-// //     this.funcion_ejecutora = ejecutarEnWebApp();
-// //   }
-// //
-// //   ejecutarEnWebApp() {}
-// // }
-// //
-// // class MostrarAlert extends Comando {
-// //   MostrarAlert(WebApp ejecutor) {
-// //     this.ejecutor = ejecutor;
-// //     this.funcion_ejecutora = ejecutarEnWebApp();
-// //   }
-// //
-// //   ejecutarEnWebApp() {}
-// // }
-//
-// //class ComandoX extends Comando {
-// //  ComandoX(Servidor ejecutor) {
-// //    this.ejecutor = ejecutor;
-// //    this.funcion_ejecutora = ejecutarEnServidor();
-// //  }
-// //
-// //  ComandoX(WebApp ejecutor) {
-// //    this.ejecutor = ejecutor;
-// //    this.funcion_ejecutora = ejecutarEnWebApp();
-// //  }
-// //
-// //  ejecutarEnServidor(){}
-// //  ejecutarEnWebApp(){}
-// //}
+
+class Command{
+  String name;
+  Map arguments = {};
+  // Associate transmitter;
+
+  Command(this.name, this.arguments);
+}
+
+abstract class CommandImplementation{
+  bool requiresPermission = true;
+  bool permissionGranted = false;
+  List<Associate> allowedUsers = [];
+  List<Associate> deniedUsers = [];
+  List<Roles> allowedRoles = [Roles.ADMIN];
+  List<Roles> grantedRoles = [];
+  List<Roles> deniedRoles = [];
+  Map arguments = {};
+  Object executor;
+  String name;
+  String description;
+
+  askForPermission();
+  execute();
+
+  Command generateCommand(Map arguments) => new Command(this.name, arguments);
+}
