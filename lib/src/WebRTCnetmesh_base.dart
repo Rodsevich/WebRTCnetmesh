@@ -23,7 +23,7 @@ abstract class Codificable<API> {
 
   @protected
   List paraSerializar() {
-    List ret = [this.tipo.index];
+    List ret = (this.tipo != null) ? [this.tipo.index] : [];
     var sPropia = serializacionPropia();
     if (sPropia == null) return ret;
     if (sPropia is! List) {
@@ -52,8 +52,6 @@ abstract class Asociado {
 
   Duration lapsoMedicionPing = new Duration(seconds: 1);
 
-  bool conectadoDirectamente;
-
   Duration get tiempoSinComunicacion =>
       new DateTime.now().difference(ultimaComunicacion);
   Duration get tiempoConectado =>
@@ -63,30 +61,36 @@ abstract class Asociado {
 class Associate {}
 
 abstract class Exportable<T> {
-  T _exportado;
-  T aExportable() {
-    if (_exportado == null) _exportado = new T.desdeEncubierto(this);
-    return _exportado;
-  }
+  T exportado;
+  T aExportable();
 }
 
+abstract class EnviadorMensajesTerminal {
+  bool tieneConexion;
+  var canal;
+  enviarMensaje(Mensaje msj);
+}
+
+///Tiene que ser si o si un exportable el T, eh
 abstract class InterfazEnvioMensaje<T> {
   var identity;
   List<T> associates = [];
   Identidad identidad;
   var servidor;
 
+  var comandos;
+
   /// Handles the sending of both the information and the destinatary supplied
   send(to, data) {
     int desde = this.identidad.id_sesion;
     var para;
-    T medio;
+    var medio;
     Mensaje msj;
     if (to is Associate) {
       //todo: manejar errores
-      to = associates.singleWhere((T a) => (a as Exportable)._exportado = to);
+      to = associates.singleWhere((T a) => (a as Exportable).exportado == to);
     }
-    if (to is T) {
+    if (to is T || to is EnviadorMensajesTerminal) {
       //No deja meter T en el switch por no ser const
       para = to.identidad;
       medio = to;
@@ -119,27 +123,39 @@ abstract class InterfazEnvioMensaje<T> {
       }
     }
 
-    if(data is Command){
-      //Todo: Seguir aca
+    if (data is Command) {
+      //Todo: Seguir aca...
+      Comando cmd;
+      cmd = this.comandos.singleWhere((Comando c) => c.nombre == data.name);
+      cmd.indice = (this.comandos as List).indexOf(cmd);
+      cmd.arguments = data.arguments;
+      data = new Mensaje.desdeDatos(desde, para, cmd);
     }
 
-    if (data is Mensaje && medio == null)
-      medio = search((data as Mensaje).id_receptor);
-    msj = new Mensaje.desdeDatos(desde, para, data);
+    msj = (data is Mensaje) ? data : new Mensaje.desdeDatos(desde, para, data);
 
+    medio ??= search((data as Mensaje).id_receptor);
     if (medio == null) {
       throw new Exception("Hubo un lindo error por acá :/");
-    } else
+    } else {
+      if(medio.tieneConexion == false)
+        medio = this.servidor;
       medio.enviarMensaje(msj);
+    }
   }
 
   sendAll(data) {
     //No se si deberia mandar un mensaje con DestinatariosMensaje.TODOS
     // invariante... Por lo pronto no se está mandando asi
-    Mensaje mensaje =
-        new Mensaje.desdeDatos(identity, DestinatariosMensaje.TODOS, data);
+    Mensaje mensaje = (data is Mensaje)
+        ? data
+        : new Mensaje.desdeDatos(
+            this.identidad, DestinatariosMensaje.TODOS, data);
+    print(mensaje.toCodificacion());
+    if(this.servidor.tieneConexion)
+      send(this.servidor, mensaje);
     associates
-        .where((a) => a.conectadoDirectamente)
+        .where((a) => a.tieneConexion)
         .forEach((a) => send(a, mensaje));
   }
 

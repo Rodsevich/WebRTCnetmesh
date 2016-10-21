@@ -12,10 +12,12 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
   Identidad identity;
   Servidor server;
 
+  List<Cliente> clients;
+
   int get totalClients => clients.length;
 
   int get amountClientsDirectlyConnected =>
-      clients.where((Cliente p) => p.conectadoDirectamente).length;
+      clients.where((Cliente p) => p.tieneConexion).length;
 
   Stream<Mensaje> get onMessage => _controladorMensajes.stream;
   Stream<Comando> get onCommand => _controladorComandos.stream;
@@ -65,9 +67,9 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
   Cliente search(id) {
     try {
       if (id is int)
-        return clients.singleWhere((c) => c.identidad_remota.id_sesion == id);
+        return clients.singleWhere((c) => c.identidad.id_sesion == id);
       else if (id is Identidad)
-        return clients.singleWhere((c) => c.identidad_remota == id);
+        return clients.singleWhere((c) => c.identidad == id);
       else
         throw new Exception("Usa un int o una Identidad, pls");
     } on StateError {
@@ -78,12 +80,12 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
   int _contador_sesiones = 1;
   void _manejadorNuevosClientes(WebSocket ws) {
     Cliente cliente = new Cliente(ws, identity);
-    cliente.identidad_remota.id_sesion = _contador_sesiones++;
+    cliente.identidad.id_sesion = _contador_sesiones++;
     cliente.onMensaje.listen((msj) {
       _manejadorMensajes(msj, cliente);
     });
     clients.add(cliente);
-    _controladorNuevasConexiones.add(cliente.identidad_remota);
+    _controladorNuevasConexiones.add(cliente.identidad);
   }
 
   _suscribirNuevoCliente(MensajeSuscripcion msj, Cliente emisor) {
@@ -92,22 +94,22 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
     if (search(id_pretendida) != null) {
       //La Identidad pretendida ya está registrada
       Cliente cliente = search(msj.identidad);
-      throw new FaltaNombreNoDisponible(cliente.identidad_remota);
+      throw new FaltaNombreNoDisponible(cliente.identidad);
     } else {
       try {
-        emisor.identidad_remota.nombre = msj.identidad.nombre;
+        emisor.identidad.nombre = msj.identidad.nombre;
       } catch (e) {
         throw new FaltaNombreMalFormado(id_pretendida.nombre, e.toString());
       }
-      emisor.identidad_remota = id_pretendida;
+      emisor.identidad = id_pretendida;
     }
   }
 
   MensajeInformacion _estadoActualUsuarios(Cliente emisor) {
     InfoUsuarios info_usuarios = new InfoUsuarios();
-    for (Cliente c in clients) info_usuarios.usuarios.add(c.identidad_remota);
+    for (Cliente c in clients) info_usuarios.usuarios.add(c.identidad);
     return new MensajeInformacion(
-        identity, emisor.identidad_remota, info_usuarios);
+        identity, emisor.identidad, info_usuarios);
   }
 
   _propagarNuevaSuscripcion(Identidad nuevoId) {

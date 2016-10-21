@@ -10,8 +10,7 @@ import 'package:WebRTCnetmesh/src/cliente/Par.dart';
 import 'package:WebRTCnetmesh/src/cliente/WebSocketDebugger.dart';
 import "package:scheduled_test/scheduled_test.dart";
 
-class Imprimir extends CommandImplementation{
-
+class Imprimir extends CommandImplementation {
   @override
   askForPermission() {
     return true;
@@ -20,7 +19,7 @@ class Imprimir extends CommandImplementation{
   @override
   Impresor executor;
 
-  Imprimir(Impresor imp){
+  Imprimir(Impresor imp) {
     this.executor = imp;
   }
 
@@ -30,11 +29,11 @@ class Imprimir extends CommandImplementation{
   }
 }
 
-class Impresor{
+class Impresor {
   Impresor(this.actual);
   List<String> buffer = [];
   String actual;
-  agregarMsj(String msj){
+  agregarMsj(String msj) {
     buffer.add(actual);
     actual = msj;
   }
@@ -42,17 +41,17 @@ class Impresor{
 
 void main() {
   WebSocketDebugger debugger = new WebSocketDebugger(4040);
-  Identidad identidad = new Identidad("pepe");
-  Identity identity = new Identity.desdeEncubierto(identidad);
+  Identity identity = new Identity("sorpi");
+  Identidad identidad = new Identidad("sorpi");
   WebRTCnetmesh cliente;
   Impresor impresor = new Impresor("inicial");
   List<CommandImplementation> comandos = [];
   Imprimir comandoImprimir = new Imprimir(impresor);
   comandos.add(comandoImprimir);
 
-  test("Identidad genera Identity",(){
-    expect(identidad.aExportable(), new isInstanceOf<Identity>());
-  });
+  // test("Identidad genera Identity", () {
+  //   expect(identidad.aExportable(), completion(new isInstanceOf<Identity>()));
+  // });
   group("Funcionalidad en red:", () {
     test("Tira exception si no hay conexión con el servidor", () {
       //Debería intemntar crear el cliente acá y que falle normalmente
@@ -68,15 +67,24 @@ void main() {
       cliente = new WebRTCnetmesh(identity, comandos);
       schedule(() => expect(msj, completion(equals(codificacion))));
     });
-    test("Mensajde de suscripcion actualiza ID enviada por el server sin +",
-        () {
-      var iden = new Identidad("cliente")..id_sesion = 1;
+    test("Mensaje de suscripcion actualiza a ID enviada por el server", () {
+      String cambioNombre = "longa";
+      String cambioEmail = "p@q.com";
+      var iden = identidad
+        ..id_sesion = 1
+        ..nombre = cambioNombre
+        ..email = cambioEmail;
       var msj = new MensajeSuscripcion(iden);
       debugger.enviarMensaje(msj.toCodificacion());
       schedule(() => new Future.delayed(new Duration(milliseconds: 300)));
-      schedule((){
-        expect(identity.name, equals("cliente"));
-        expect(identidad.id_sesion, equals(1));
+      schedule(() {
+        expect(identity.name, equals(cambioNombre));
+        expect(identity.email, equals(cambioEmail));
+        //"Cuando mejore el debugger para borrar un cliente y empezar otro nuevo,
+        //crearlo con un Identity.desdeEncubierto y sacar este comment"
+        // Identidad identidad = new Identidad("pepe");
+        // Identity identity = new Identity.desdeEncubierto(identidad);
+        // expect(identidad.id_sesion, equals(1));
         expect(cliente.associates, isEmpty);
       });
     });
@@ -94,58 +102,77 @@ void main() {
           new Mensaje.desdeDatos(0, 1, infoUsuarios).toCodificacion();
       print(codificacion);
       debugger.enviarMensaje(codificacion);
-      print("mensaje enviado");
-      // schedule(() => new Future.delayed(new Duration(seconds: 2)));
+      schedule(() => new Future.delayed(new Duration(milliseconds: 200)));
+      var comparador = new Identity.desdeEncubierto(identidad);
       schedule(() {
         expect(cliente.associates, isList);
         expect(cliente.associates.length, equals(2));
-        var comparador = new Identidad("cliente")
-          ..id_sesion = 1
-          ..aExportable();
-        expect(cliente.identity, equals(comparador));
-        expect(cliente.associates[0].identity,
-            equals(new Identidad("pp")..id_sesion = 2..aExportable()));
-        expect(cliente.associates[1].identity,
-            equals(new Identidad("qq")..id_sesion = 3..aExportable()));
+        expect(cliente.identity.name, equals(comparador.name));
+        expect(cliente.associates[0].identity.name, equals("pp"));
+        expect(cliente.associates[1].identity.name, equals("qq"));
       });
     });
     test("Cambios en la identity son informados ", () {
       Future msj = schedule(() => debugger.proximoMensajeARecibir);
-      CambioIdentidad cambio = new CambioIdentidad("n", "cliente", "pepe");
+      String cambioNombre = "cliente";
+      CambioIdentidad cambio =
+          new CambioIdentidad("n", identidad.nombre, cambioNombre);
       InfoCambioUsuario info = new InfoCambioUsuario(cambio);
       var m = new Mensaje.desdeDatos(
           identidad.id_sesion, DestinatariosMensaje.TODOS, info);
       String codificacion = m.toCodificacion();
-      identity.name = "pepe";
+      identity.name = cambioNombre;
       schedule(() {
         expect(msj, completion(equals(codificacion)));
       });
     });
     test("Creación nuevo usuario", () async {
       cliente.onNewConnection.listen(expectAsync((id) {
-        expect(id.name, equals("carlos"));
+        expect(id.identity.name, equals("carlos"));
       }));
       InfoUsuario info = new InfoUsuario(InformacionAPI.NUEVO_USUARIO);
       info.usuario = new Identidad("carlos")..id_sesion = 4;
       MensajeInformacion msj = new Mensaje.desdeDatos(0, 1, info);
+      // Future msj = schedule(() => debugger.proximoMensajeARecibir);
       debugger.enviarMensaje(msj.toCodificacion());
+      // schedule(() => expect(msj, completes));
     }, testOn: "browser");
   });
   group("Usabilidad con el cliente:", () {
     test("Puede conseguir pairs", () {
       expect(cliente.associates[0], new isInstanceOf<Pair>());
     });
-    test("Manda bien los comandos", () {
-      var msj = debugger.proximoMensajeARecibir;
-      Command imprimirCmd = comandoImprimir.generateCommand({"valor":"pepe"});
+
+    String codificacionComando;
+    Command imprimirCmd = comandoImprimir.generateCommand({"valor": "imprimi"});
+    test("Obtener CodificacionComando...", () {
       cliente.send(cliente.associates[0], imprimirCmd);
-      expect(msj, completion(equals('1,2,3,1,{"valor":"pepe"}')));
+      schedule(() async {
+        codificacionComando = await debugger.proximoMensajeARecibir;
+        print("MENSAJE: $codificacionComando");
+      });
+      // schedule(() => new Future.delayed(new Duration(milliseconds: 500)));
+      schedule(() => expect(codificacionComando, new isInstanceOf<String>()));
     });
-    test("Ejecuta bien los comandos",(){
-      debugger.enviarMensaje('2,1,3,1,{"valor":"pepe"}');
-      schedule(() => new Future.delayed(new Duration(milliseconds: 100)));
-      schedule(() => expect(impresor.actual, equals("pepe")));
+
+    test("Manda bien los comandos", () {
+      Future msj = schedule(() => debugger.proximoMensajeARecibir);
+      cliente.send(cliente.associates[0], imprimirCmd);
+      Comando comando = new Comando(null, 0)..arguments = imprimirCmd.arguments;
+      schedule(() => expect(msj, completion(equals(codificacionComando))));
+      schedule(() => print(msj.runtimeType));
+    });
+
+    test("Ejecuta bien los comandos", () {
+      Mensaje msj = new Mensaje.desdeCodificacion(codificacionComando);
+      var aux = msj.id_emisor;
+      msj.id_emisor = msj.id_receptor;
+      msj.id_receptor = aux;
+      debugger.enviarMensaje(msj.toCodificacion());
+      schedule(() => new Future.delayed(new Duration(milliseconds: 300)));
+      schedule(() => expect(impresor.actual, equals(imprimirCmd.arguments["valor"])));
     }, testOn: "browser");
+
     test("Recibe bien las interacciones", () async {
       cliente.onInteraction.listen(expectAsync((msj) {
         expect(msj, new isInstanceOf<Interaccion>());

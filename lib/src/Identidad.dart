@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
-import 'package:WebRTCnetmesh/src/cliente/WebRTCnetmesh.dart';
+// import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
+// import 'package:WebRTCnetmesh/src/cliente/WebRTCnetmesh.dart' deferred as Id;
 
 ///Clase usada para representar los cambios en la(s) [Identidad]es
-class CambioIdentidad{
+class CambioIdentidad {
   String campo;
   var valor_nuevo;
   var valor_viejo;
 
-  CambioIdentidad(this.campo,this.valor_viejo,this.valor_nuevo);
-  CambioIdentidad.desdeCodificacion(String codificacion){
+  CambioIdentidad(this.campo, this.valor_viejo, this.valor_nuevo);
+  CambioIdentidad.desdeCodificacion(String codificacion) {
     this.valor_nuevo = codificacion.split(',')[0].substring(1);
     this.valor_viejo = codificacion.split(',')[1];
     this.campo = codificacion[0];
@@ -27,7 +27,8 @@ class CambioIdentidad{
 enum Roles { ADMIN, MODERATOR, USER, }
 
 ///Clase interna al sistema que maneja toda la lógica
-class Identidad extends Exportable<Identity>{
+// class Identidad extends Exportable<Identity> {
+class Identidad {
   int id_sesion;
   String _nombre;
   String id_feis;
@@ -57,17 +58,20 @@ class Identidad extends Exportable<Identity>{
     if (codificacion is! List && codificacion is! String)
       throw new Exception("que hago con un ${codificacion.runtimeType}?");
     if (codificacion is List) codificacion = codificacion.join(',');
-    if ((codificacion as String).startsWith("(")) {
-      if ((codificacion as String).endsWith(")"))
-        codificacion = codificacion.substring(1, codificacion.length - 1);
-      else
-        throw new Exception("Algo muy raro pasó O.o");
-    }
+    // if ((codificacion as String).startsWith("(")) {
+    //   if ((codificacion as String).endsWith(")"))
+    //     codificacion = codificacion.substring(1, codificacion.length - 1);
+    //   else
+    //     throw new Exception("Algo muy raro pasó O.o");
+    // }
+    implementarCodificacion(codificacion);
+  }
+
+  void implementarCodificacion(String codificacion) {
     List<String> vals = codificacion.split(',');
     this.nombre = vals[0];
     if (vals.length >= 2) this.id_sesion = int.parse(vals[1]);
-    for (int i = 2; i < vals.length; i++)
-      modificarCampo(vals[i]);
+    for (int i = 2; i < vals.length; i++) modificarCampo(vals[i]);
   }
 
   void modificarCampo(String codificacion) {
@@ -93,6 +97,11 @@ class Identidad extends Exportable<Identity>{
     }
   }
 
+  actualizarCon(Identidad otra){
+    String cod = otra.toString();
+    implementarCodificacion(cod);
+  }
+
   String get id => id_sesion.toString();
 
   List paraSerializar() {
@@ -106,16 +115,25 @@ class Identidad extends Exportable<Identity>{
     return tmp;
   }
 
-  String toString() => "(${paraSerializar().join(',')})";
+  // String toString() => "(${paraSerializar().join(',')})";
+  String toString() => "${paraSerializar().join(',')}";
   String toJson() => toString();
 
   bool operator ==(otra) {
-    if (otra.runtimeType is Identidad) {
+    if (otra is Identidad) {
       if (this.id_sesion == null || otra.id_sesion == null)
-        return this.nombre == otra.nombre;
+        return (this.nombre == otra.nombre);
       else
-        return this.id_sesion == otra.id_sesion;
+        return (this.id_sesion == otra.id_sesion);
     } else
       return false;
   }
+
+  // @override
+  // aExportable() {
+  //   Id.loadLibrary().then((_) {
+  //     if (exportado == null) exportado = new Id.Identity.desdeEncubierto(this);
+  //     return exportado;
+  //   });
+  // }
 }

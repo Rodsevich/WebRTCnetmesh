@@ -18,31 +18,10 @@ Please file feature requests and bugs at the [issue tracker][tracker].
 
 [tracker]: http://example.com/issues/replaceme
 
-'.source.dart':
-  'Test clause':
-    'prefix': 'test'
-    'body': """
-    test("${1:Test name}",(){
-      $2
-    }${3:, testOn: "browser,vm"});
-    """
-  'Async Test clause':
-    'prefix': 'atest'
-    'body': """
-    test("${1:Test name}",() async {
-      $2
-      ${3:someStream}.listen(expectAsync(($4) {
-        $5
-        expect($4, $6);
-      }));
-    }${7:, testOn: "browser,vm"});
-    """
-  'Expect':
-    'prefix': 'ex'
-    'body': 'expect($1, $2);$3'
-  'Expect Equals':
-    'prefix': 'exeq'
-    'body': 'expect($1, equals($2));$3'
-  'Async testing schedule()':
-    'prefix': 'sch'
-    'body': 'schedule(() => $1);$2'
+ToDos:
+- Encaminamiento eficiente con bifurcacion de paquetes
+- Facilidad registro desde BD en el lado del servidor:
+  - _new Identidad()_ a secas, se carga con algún ID. Se envía solicitud. El servidor completa la ID
+  - En el servidor:
+    - WebRTCnetmesh.onOAuthRequest()
+    - WebRTCnetmesh.reuqestBDSearch(id)

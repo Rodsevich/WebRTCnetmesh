@@ -78,7 +78,7 @@ abstract class Mensaje extends Codificable<MensajesAPI> {
   factory Mensaje.desdeDatos(desde, para, dato) {
     if (dato is Mensaje) {
       dato.id_emisor = desde;
-      dato._id_receptor = para;
+      dato.id_receptor = para;
       return dato;
     } else if (dato is Falta)
       return new MensajeFalta(desde, para, dato);

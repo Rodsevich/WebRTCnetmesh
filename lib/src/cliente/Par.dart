@@ -24,7 +24,7 @@ Map _restriccionDeMedios = {
 
 /// Objeto que el cliente tendrá por cada conexión con otro [Par], que lo
 /// proveerá de funcionalidad de alto nivel para facilitar la comunicación
-class Par extends Asociado with Exportable<Pair>{
+class Par extends Asociado with Exportable<Pair>, EnviadorMensajesTerminal{
   final Identidad _identidad_local;
   Identidad identidad;
 
@@ -37,6 +37,8 @@ class Par extends Asociado with Exportable<Pair>{
   RtcDataChannel canal;
 
   RtcPeerConnection conexion;
+
+  bool get tieneConexion => canal.negotiated;
 
   Par(Identidad identidad_local, Identidad this.identidad)
       : this._identidad_local = identidad_local {
@@ -85,7 +87,6 @@ class Par extends Asociado with Exportable<Pair>{
   }
 
   void _manejadorDatosDesdeCanal(MessageEvent messageEvent) {
-    log("Se recibió el texto: ${messageEvent.data}");
     Mensaje mensaje = new Mensaje.desdeCodificacion(messageEvent.data);
     //Evitar loops
     if (mensaje.ids_intermediarios.contains(_identidad_local.id_sesion)) return;
@@ -126,13 +127,23 @@ class Par extends Asociado with Exportable<Pair>{
   void enviarMensaje(Mensaje msj) {
     canal.sendString(msj.toCodificacion());
   }
+
+  @override
+  Pair aExportable() {
+     if (exportado == null) exportado = new Pair.desdeEncubierto(this);
+     return exportado;
+  }
 }
 
 ///Class that represents another client
 class Pair extends Associate{
   Par _par;
+  Identity _identity;
 
-  Identity get identity => _par.identidad.aExportable();
+  Identity get identity{
+    if(_identity == null) _identity = new Identity.desdeEncubierto(_par.identidad);
+    return _identity;
+  }
 
   Pair(){
     throw "Can't create; they should be taken from WebRTCNetmesh";

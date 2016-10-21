@@ -19,6 +19,11 @@ void main() {
 
   String codificacionJSON = JSON.encode(id_full);
   String codificacionString = id_full.toString();
+  test("Funciona bien la igualación",(){
+    expect(id_full == id_parcial, isTrue);
+    expect(id_full == new Identidad("q"), isFalse);
+    expect(id_parcial == new Identidad("nombre"), isTrue);
+  });
   test('JSON codifica a un String igual que ".toString()"',(){
     expect(codificacionJSON, new isInstanceOf<String>());
     expect(codificacionJSON, equals('"$codificacionString"'));
@@ -57,5 +62,15 @@ void main() {
       }));
       id_parcial.cambiosController.add(cambio);
     });
+  });
+  test("Identidad.actualizaCon(otraIdentidad)",(){
+    Identidad otra = new Identidad("nom")..id_sesion = 7..id_feis = "IDFEIS";
+    id_parcial.actualizarCon(otra);
+    id_parcial.id_goog = "IDGOOG";
+    expect(id_parcial.nombre, equals("nom"));
+    expect(id_parcial.id_sesion, equals(7));
+    expect(id_parcial.id_feis, equals("IDFEIS"));
+    expect(id_parcial.id_goog, equals("IDGOOG"));
+    expect(id_parcial.id_github, isNull);
   });
 }

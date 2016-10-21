@@ -42,15 +42,20 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
     servidor.onConexion.listen((e) {
       informarIdentidad();
     });
-    identidad.onCambios.listen(informarIdentidad);
+    identidad.onCambios.listen((cambio) {
+      print(cambio);
+      informarIdentidad(cambio);
+    });
   }
 
   void informarIdentidad([CambioIdentidad cambio = null]) {
+    print(identidad.id_sesion);
     if (identidad.id_sesion == null) {
       send(DestinatariosMensaje.SERVIDOR, new MensajeSuscripcion(identidad));
     } else {
+      print("Cambio: ${cambio.toString()}");
       InfoCambioUsuario info = new InfoCambioUsuario(cambio);
-      send(DestinatariosMensaje.TODOS, info);
+      sendAll(info);
     }
   }
 
@@ -60,7 +65,9 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
     //  else forward(msj)
     switch (msj.tipo) {
       case MensajesAPI.SUSCRIPCION:
-        identidad = (msj as MensajeSuscripcion).identidad;
+        print("antes: $identidad");
+        identidad.actualizarCon((msj as MensajeSuscripcion).identidad);
+        print("depues: $identidad");
         break;
       case MensajesAPI.INFORMACION:
         Informacion informacion = (msj as MensajeInformacion).informacion;
@@ -97,22 +104,24 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
       case MensajesAPI.RESPUESTA_WEBRTC:
       case MensajesAPI.CANDIDATOICE_WEBRTC:
         Par par = search(msj.id_emisor);
-        switch (msj.tipo) {
-          case MensajesAPI.OFERTA_WEBRTC:
-            MensajeRespuestaWebRTC resp =
-                await par.mensaje_respuesta_inicio_conexion(
-                    (msj as MensajeOfertaWebRTC).oferta);
-            send(msj.id_emisor, resp);
-            break;
-          case MensajesAPI.RESPUESTA_WEBRTC:
-            par.setear_respuesta((msj as MensajeRespuestaWebRTC).respuesta);
-            break;
-          case MensajesAPI.CANDIDATOICE_WEBRTC:
-            par.setear_ice_candidate_remoto(
-                (msj as MensajeCandidatoICEWebRTC).candidato);
-            break;
-          default: //Para evitar warnings...
-            throw new Error(); //Imposible que pase
+        if(par != null){
+          switch (msj.tipo) {
+            case MensajesAPI.OFERTA_WEBRTC:
+              MensajeRespuestaWebRTC resp =
+                  await par.mensaje_respuesta_inicio_conexion(
+                      (msj as MensajeOfertaWebRTC).oferta);
+              send(msj.id_emisor, resp);
+              break;
+            case MensajesAPI.RESPUESTA_WEBRTC:
+              par.setear_respuesta((msj as MensajeRespuestaWebRTC).respuesta);
+              break;
+            case MensajesAPI.CANDIDATOICE_WEBRTC:
+              par.setear_ice_candidate_remoto(
+                  (msj as MensajeCandidatoICEWebRTC).candidato);
+              break;
+            default: //Para evitar warnings...
+              throw new Error(); //Imposible que pase
+          }
         }
         break;
       case MensajesAPI.FALTA:
@@ -128,9 +137,10 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
         }
         break;
       case MensajesAPI.COMANDO:
-        Comando comando = comandos[(msj as MensajeComando).comando.indice];
-        //Todo: Seguir aca
-      break;
+        Comando comandoLocal = comandos[(msj as MensajeComando).comando.indice];
+        comandoLocal.cargarDesde((msj as MensajeComando).comando);
+        comandoLocal.ejecutar();
+        break;
       default:
         throw new Exception(
             "Recibido un mensaje con tipo anomalo: ${msj.tipo}");
@@ -158,7 +168,7 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
   Par crearPar(Identidad id) {
     Par par = new Par(identidad, id);
     associates.add(par);
-    print("par $id agregado: ${JSON.encode(associates)}");
+    // print("par $id agregado: ${JSON.encode(associates)}");
     par.onMensaje.listen(manejadorMensajes);
     return par;
   }
@@ -184,8 +194,7 @@ class Identity {
 
   void set name(String name) {
     if (_modificable) {
-      CambioIdentidad cambio;
-      new CambioIdentidad('n', _id.nombre, name);
+      CambioIdentidad cambio = new CambioIdentidad('n', _id.nombre, name);
       _id.nombre = name;
       _id.cambiosController.add(cambio);
     } else
@@ -196,8 +205,7 @@ class Identity {
 
   void set email(String email) {
     if (_modificable) {
-      CambioIdentidad cambio;
-      new CambioIdentidad('E', _id.email, email);
+      CambioIdentidad cambio = new CambioIdentidad('E', _id.email, email);
       _id.email = email;
       _id.cambiosController.add(cambio);
     } else
@@ -208,8 +216,8 @@ class Identity {
 
   void set facebook_id(String facebook_id) {
     if (_modificable) {
-      CambioIdentidad cambio;
-      new CambioIdentidad('F', _id.id_feis, facebook_id);
+      CambioIdentidad cambio =
+          new CambioIdentidad('F', _id.id_feis, facebook_id);
       _id.id_feis = facebook_id;
       _id.cambiosController.add(cambio);
     } else
@@ -220,8 +228,7 @@ class Identity {
 
   void set google_id(String google_id) {
     if (_modificable) {
-      CambioIdentidad cambio;
-      new CambioIdentidad('G', _id.id_goog, google_id);
+      CambioIdentidad cambio = new CambioIdentidad('G', _id.id_goog, google_id);
       _id.id_goog = google_id;
       _id.cambiosController.add(cambio);
     } else
@@ -232,8 +239,8 @@ class Identity {
 
   void set github_id(String github_id) {
     if (_modificable) {
-      CambioIdentidad cambio;
-      new CambioIdentidad('g', _id.id_github, github_id);
+      CambioIdentidad cambio =
+          new CambioIdentidad('g', _id.id_github, github_id);
       _id.id_github = github_id;
       _id.cambiosController.add(cambio);
     } else
@@ -254,7 +261,7 @@ class WebRTCnetmesh {
           commandImplementations[i].runtimeType.toString() ==
               "CommandImplementation")
         throw new Exception("Must be a subclass of CommandImplementation");
-      comandos[i] = new Comando(commandImplementations[i], i);
+      comandos.insert(i, new Comando(commandImplementations[i], i));
     }
     _cliente = new ClienteWebRTCnetmesh(identity, comandos, server_uri);
   }

@@ -1,4 +1,4 @@
-timeout: 3m
+timeout: 40s
 platforms:
 - vm
 - content-shell

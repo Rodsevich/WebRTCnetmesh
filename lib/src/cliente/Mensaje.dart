@@ -54,12 +54,12 @@ class MensajeCandidatoICEWebRTC extends Mensaje {
 
   MensajeCandidatoICEWebRTC(emisor, receptor, this.candidato)
       : super(emisor, receptor) {
-    this.tipo = MensajesAPI.RESPUESTA_WEBRTC;
+    this.tipo = MensajesAPI.CANDIDATOICE_WEBRTC;
   }
   MensajeCandidatoICEWebRTC.desdeDecodificacion(
       List info_direccionamiento, List datosCandidato)
       : super.desdeDecodificacion(info_direccionamiento) {
-    this.tipo = MensajesAPI.RESPUESTA_WEBRTC;
+    this.tipo = MensajesAPI.CANDIDATOICE_WEBRTC;
     this.candidato = new RtcIceCandidate({
       "candidate": datosCandidato[0],
       "sdpMid": datosCandidato[1],

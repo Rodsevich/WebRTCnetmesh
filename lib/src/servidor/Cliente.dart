@@ -6,9 +6,9 @@ import '../Identidad.dart';
 import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 import 'package:meta/meta.dart';
 
-class Cliente extends Asociado with Exportable<Client>{
+class Cliente extends Asociado with Exportable<Client>, EnviadorMensajesTerminal{
   final Identidad identidad_local;
-  Identidad identidad_remota;
+  Identidad identidad;
   WebSocket _canal;
   StreamController _notificadorMensajes;
   Stream<Mensaje> get onMensaje => _notificadorMensajes.stream;
@@ -18,11 +18,11 @@ class Cliente extends Asociado with Exportable<Client>{
   Duration get tiempoSinComunicacion =>
       new DateTime.now().difference(_ultimaComunicacion);
 
-  bool get conectadoDirectamente => _canal.readyState == WebSocket.OPEN;
+  bool get tieneConexion => _canal.readyState == WebSocket.OPEN;
 
   Cliente(this._canal, Identidad identidad_local)
       : this.identidad_local = identidad_local {
-    identidad_remota = new Identidad(null);
+    identidad = new Identidad(null);
     _notificadorMensajes = new StreamController();
     _canal.listen(_manejarMensajes);
   }
@@ -56,6 +56,11 @@ class Cliente extends Asociado with Exportable<Client>{
 
   enviarMensaje(Mensaje msj){
     _canal.add(msj.toCodificacion());
+  }
+  @override
+  Client aExportable() {
+    if (exportado == null) exportado = new Client.desdeEncubierto(this);
+    return exportado;
   }
 }
 
