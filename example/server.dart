@@ -5,10 +5,9 @@ import 'package:WebRTCnetmesh/WebRTCnetmesh_server.dart';
 import 'package:WebRTCnetmesh/src/Mensaje.dart';
 
 main() {
-  WebRTCnetmesh servidor = new WebRTCnetmesh();
-  servidor.onMessage.listen((Mensaje msj) {
-    print("Recibido un ${msj.runtimeType}");
+  WebRTCnetmesh server = new WebRTCnetmesh();
+  server.onMessage.listen((Mensaje msj) {
+    print("Received ${msj.runtimeType}");
   });
-//  servidor.onNewConnection.listen(print);
-  servidor.onCommand.listen((_) => print("Un comando! :O"));
+  server.onNewConnection.listen((Identidad id) => print("Conectado: ${id.nombre}"));
 }

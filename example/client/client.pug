@@ -1,0 +1,25 @@
+//output:client.html
+
+doctype html
+head
+  title WebRTCnetmesh Example
+  meta(name="viewport" content="width=device-width, initial-scale=1.0")
+  link(rel='stylesheet', href="client.css")
+body
+  #registration
+    h1 Welcome to WebRTCnetmesh Example!
+    p.
+      Please choose a nickname in order to login
+    input#registration__nickname(placeholder="yourNickname (only letters and no spaces)")
+    button#registration__connect(disabled) Connect
+
+  #panel
+    section#chat
+      .message-line.message-line--info Welcome
+      .message-line.message-line--server Registered as "Sorpi"
+      .message-line.message-line--message(data-user="Pepe") Hola, Sorpi
+    section#sender
+      input#message(placeholder="Message to send")
+      button#send-button Send
+    section#contacts
+      .contact Nico

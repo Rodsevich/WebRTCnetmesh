@@ -2,6 +2,7 @@ library WebRTCNetmesh.client;
 
 import "dart:async";
 import 'dart:convert';
+import 'dart:html';
 
 import "../WebRTCnetmesh_base.dart";
 import "./Par.dart";
@@ -172,6 +173,27 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
     par.onMensaje.listen(manejadorMensajes);
     return par;
   }
+
+  pedirPermisos(bool video, bool audio) {
+    
+  }
+
+  AudioElement audioLocalElem;
+  VideoElement videoLocalElem;
+
+  AudioElement get audioLocal{
+    if(audioLocalElem == null){
+      audioLocalElem = new AudioElement();
+    }
+    return audioLocalElem;
+  }
+
+  AudioElement get videoLocal{
+    if(videoLocalElem == null){
+      videoLocalElem = new VideoElement();
+    }
+    return audioLocalElem;
+  }
 }
 
 ///Class that the client would use in order to have everybody informed
@@ -246,6 +268,7 @@ class Identity {
     } else
       throw "Not possible to change Identities other than yours own";
   }
+
 }
 
 ///Public use class to encapsulate internal logic
@@ -274,6 +297,8 @@ class WebRTCnetmesh {
 
   send(to, data) => _cliente.send(to, data);
   sendAll(data) => _cliente.sendAll(data);
+
+  requestMediaPermissions({bool video: true, bool audio: true}) => _cliente.pedirPermisos(video, audio);
 
   Stream get onCommand => _cliente.onCommand;
   Stream get onInteraction => _cliente.onInteraction;

@@ -1,0 +1,114 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: blue;
+}
+
+#registration {
+  display: none;
+  position: fixed;
+  text-align: center;
+  width: 75%;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  margin-top: -150px;
+  margin-left: -37.5%;
+}
+
+#registration:before {
+  content: "";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: -10;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#registration > * {
+  z-index: 20;
+}
+
+#registration:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: -5;
+}
+
+#registration:after {
+  background-color: gray;
+}
+
+#registration__nickname {
+  text-align: center;
+  width: 80%;
+  margin: 0 auto;
+}
+
+#registration__connect {
+  width: 30%;
+  margin: 20px auto 0;
+}
+
+#chat {
+  display: absolute;
+  width: 70%;
+  margin-left: 5%;
+  margin-top: 30px;
+  border: 4px solid black;
+  box-shadow: 1px 1px 5px black;
+  height: 700px;
+  background-color: white;
+}
+
+.message-line {
+  width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 30, 0.3);
+  font: 20px black;
+}
+
+.message-line--server {
+  background-color: grey;
+  font: 18px Arial #280000;
+}
+
+.message-line--server::before {
+  display: inline-block;
+  content: "server";
+  padding: 4px 10px;
+  margin: 2px 5px;
+  color: #444;
+  background-color: #aaa;
+}
+
+.message-line--info {
+  background-color: #326ed2;
+  font: 20px white;
+}
+
+.message-line--info::before {
+  display: inline-block;
+  content: "Info";
+  padding: 4px 10px;
+  margin: 2px 5px;
+  color: #ccf;
+  background-color: #8be;
+}
+
+.message-line--message::before {
+  content: attr(data-user) ":";
+  font-size: 25px;
+  display: inline-block;
+  margin: 1px 4px;
+}

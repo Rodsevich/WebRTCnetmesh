@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<head>
+  <title>WebRTCnetmesh Example</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="client.css">
+</head>
+<body>
+  <div id="registration">
+    <h1>Welcome to WebRTCnetmesh Example!</h1>
+    <p>Please choose a nickname in order to login</p>
+    <input id="registration__nickname" placeholder="yourNickname (only letters and no spaces)">
+    <button id="registration__connect" disabled>Connect</button>
+  </div>
+  <div id="panel">
+    <section id="chat">
+      <div class="message-line message-line--info">Welcome</div>
+      <div class="message-line message-line--server">Registered as "Sorpi"</div>
+      <div data-user="Pepe" class="message-line message-line--message">Hola, Sorpi</div>
+    </section>
+    <section id="sender">
+      <input id="message" placeholder="Message to send">
+      <button id="send-button">Send</button>
+    </section>
+    <section id="contacts">
+      <div class="contact">Nico</div>
+    </section>
+  </div>
+</body>

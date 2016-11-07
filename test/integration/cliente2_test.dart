@@ -35,28 +35,19 @@ class Impresor {
 }
 
 void main() {
-  print("test cliente");
+  print("test cliente 2");
 
-  Impresor imp1 = new Impresor("actual");
-  Impresor imp2 = new Impresor("actual");
+  Impresor imp = new Impresor("actual");
 
-  Imprimir cmdImp = new Imprimir(imp1);
-  Imprimir cmdImp = new Imprimir(imp1);
+  Imprimir cmdImp = new Imprimir(imp);
 
-  Identity id1 = new Identity("cliUno");
-  Identity id2 = new Identity("cliDos");
+  Identity id = new Identity("cliDos");
 
   group("Inicios de sesion", () {
     test("Conexion cliente 1", () async {
-      WebRTCnetmesh cliente1 = new WebRTCnetmesh(id1);
+      WebRTCnetmesh cliente1 = new WebRTCnetmesh(id, [cmdImp]);
       cliente1.onNewConnection.listen(expectAsync((Identity id) {
         expect(id.name, equals("cliUno"));
-      }));
-    });
-    test("2 conexiones", () async {
-      WebRTCnetmesh cliente2 = new WebRTCnetmesh(identity, commandImplementations)sh(id2);
-      cliente2.onNewConnection.listen(expectAsync((Identity id) {
-        expect(id.name, equals("cliDos"));
       }));
     });
   });
