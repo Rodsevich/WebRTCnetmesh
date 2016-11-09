@@ -1,11 +1,19 @@
-html,
+rhtml,
 body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   font-family: 'Roboto', sans-serif;
-  background-color: blue;
+  background-color: orange;
+}
+
+#contacts {
+  width: 20%;
+  height: 700px;
+  background-color: #fadcd2;
+  float: right;
+  margin-right: 4%;
 }
 
 #registration {
@@ -61,6 +69,41 @@ body {
   margin: 20px auto 0;
 }
 
+#sender {
+  height: 30px;
+  width: 70%;
+  margin-left: calc(5% + 5px);
+  position: absolute;
+}
+
+#sender #message-input {
+  display: inline-block;
+  width: calc(100% - 60px - 2px * 2 - 2px * 2);
+  border: 2px #00001e;
+  height: 100%;
+  background-color: lightyellow;
+}
+
+#sender #send-button {
+  cursor: pointer;
+  width: 60px;
+  border: 2px #783c00;
+  display: inline-block;
+  background-color: #aa820a;
+  box-shadow: inset -1px -1px 3px black;
+  height: 100%;
+  font-size: 16px;
+  font-weight: bold;
+  color: yellow;
+  text-shadow: 1px 1px grey;
+}
+
+#sender #send-button:active {
+  background-color: #c8960a;
+  box-shadow: inset 2px 2px 3px gray;
+  text-shadow: none;
+}
+
 #chat {
   display: absolute;
   width: 70%;
@@ -68,7 +111,7 @@ body {
   margin-top: 30px;
   border: 4px solid black;
   box-shadow: 1px 1px 5px black;
-  height: 700px;
+  height: 670px;
   background-color: white;
 }
 
@@ -80,7 +123,8 @@ body {
 
 .message-line--server {
   background-color: grey;
-  font: 18px Arial #280000;
+  font: 18px Arial;
+  color: #f0e6f0;
 }
 
 .message-line--server::before {
@@ -90,11 +134,14 @@ body {
   margin: 2px 5px;
   color: #444;
   background-color: #aaa;
+  width: 50px;
+  text-align: center;
 }
 
 .message-line--info {
   background-color: #326ed2;
-  font: 20px white;
+  font: 18px Arial;
+  color: white;
 }
 
 .message-line--info::before {
@@ -102,8 +149,10 @@ body {
   content: "Info";
   padding: 4px 10px;
   margin: 2px 5px;
-  color: #ccf;
+  color: #227;
   background-color: #8be;
+  width: 50px;
+  text-align: center;
 }
 
 .message-line--message::before {

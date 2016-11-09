@@ -13,13 +13,13 @@ body
     input#registration__nickname(placeholder="yourNickname (only letters and no spaces)")
     button#registration__connect(disabled) Connect
 
-  #panel
-    section#chat
-      .message-line.message-line--info Welcome
-      .message-line.message-line--server Registered as "Sorpi"
-      .message-line.message-line--message(data-user="Pepe") Hola, Sorpi
-    section#sender
-      input#message(placeholder="Message to send")
-      button#send-button Send
-    section#contacts
-      .contact Nico
+  section#contacts
+    .self Sorpi
+    .contact Nico
+  section#chat
+    .message-line.message-line--info Welcome
+    .message-line.message-line--server Registered as "Sorpi"
+    .message-line.message-line--message(data-user="Pepe") Hola, Sorpi
+  section#sender
+    input#message-input(placeholder="Message to send")
+    button#send-button Send
