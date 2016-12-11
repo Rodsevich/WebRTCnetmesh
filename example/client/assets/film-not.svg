@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
+<metadata> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
+  <g id="Video_Camera"><g>
+    <path d="M935,227c-6,0-12,1-19,3L663,335v-108c0-30-24-54-54-54
+      H64c-30,0-54,24-54,54v544c0,30,24,54,54,54h544c30,0,54-24,54-54v-108l253,104c6,2,12,3,19,4c28,0,54-25,54-60
+      V287C990,253,964,228,936,228z
+      M554,691c0,15-12,27-27,27H146c-15,0-27-12-27-27
+      V309c0-15,12-27,27-27h381c15,0,27,12,27,27V691z
+      M881.1,636.1l-217.8-89.6v-93l217.8-89.6V636.1z"/>
+    <line x1="0" y1="100" x2="935" y2="827" style="stroke:rgb(255,0,0);stroke-width:99" />
+    <line x1="950" y1="100" x2="0" y2="827" style="stroke:rgb(255,0,0);stroke-width:99" />
+  </g></g>
+</svg>

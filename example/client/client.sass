@@ -1,4 +1,5 @@
-rhtml,
+p 1997
+html,
 body
     width: 100%
     height: 100%
@@ -7,7 +8,7 @@ body
     font-family: 'Roboto', sans-serif
     background-color: orange
 
-$height-chat-square: 700px
+$height-chat-square: 90%
 $width-chat-square: 70%
 $height-sender: 30px
 
@@ -15,15 +16,64 @@ $contacts-width: 20%
 
 $marg-top: 30px
 $marg-sides: 5%
+
+$condition-size: 25px
+
+$min-width-video: 320px
+
+.camera
+  background-image: url("assets/anon.svg")
+  background-size: cover
+  margin-top: 5px
+
+img.condition
+  width: $condition-size
+  height: $condition-size
+  cursor: pointer
+
 #contacts
   width: $contacts-width
   height: $height-chat-square
   background-color: rgb(250,220,210)
   float: right
   margin-right: $marg-sides - 1
+  overflow-y: scroll
+  min-width: $min-width-video
 
+  .self
+    .name
+      font: 25px Arial
+      text-align: center
+      width: 100%
+    background-color: #CCC
+    padding: 15px
+    display: flex
+    flex-wrap: wrap
+    justify-content: center
+    .camera
+      min-width: $min-width-video * .75
+      width: 100%
+      height: $min-width-video / 4 * 3 *.75
+    .condition
+      width: $condition-size + $condition-size * 0.25
+      height: $condition-size + $condition-size * 0.25
+      &:last-child
+        margin-left: 5px
   .contact
-
+    border-top: 2px solid rgba(0,0,255,0.2)
+    padding: 5px
+    font-size: 18px
+    display: flex
+    flex-wrap: wrap
+    .camera
+      flex: 1 1 320px
+      width: $min-width-video
+      height: $min-width-video / 4 * 3
+    .condition, .name
+      display: inline-block
+    .name
+      font-size: 18px
+      vertical-align: super
 
 @mixin modal
 
@@ -84,21 +134,25 @@ $marg-sides: 5%
   width: 30%
   margin: 20px auto 0
 
+$chat-border-width: 4px
 
 #sender
   $button-width: 60px;
   $width-button-border: 2px
-  $width-message-border: 2px
+  $width-message-border: 3px
   height: $height-sender;
-  width: $width-chat-square;
+  width: calc(#{$width-chat-square} + 6px);
   margin-left: calc(5% + 5px)
   position: absolute
+  left: -$chat-border-width
+  margin-top: 7px
 
   #message-input
     display: inline-block
-    width: calc(100% - #{$button-width} - #{$width-button-border} * 2 - #{$width-message-border} * 2)
-    border: $width-button-border rgb(0,0,30)
+    width: calc(100% - #{$button-width} - #{$width-button-border} * 2 - #{$width-message-border} * 2 - 2px)
+    border: $width-message-border solid rgb(0,0,30)
     height: 100%
+    font-size: 18px
     background-color: lightyellow
 
   #send-button
@@ -124,9 +178,9 @@ $marg-sides: 5%
   width: $width-chat-square
   margin-left: $marg-sides
   margin-top: $marg-top
-  border: 4px solid black
+  border: $chat-border-width solid black
   box-shadow: 1px 1px 5px black
-  height: $height-chat-square - $height-sender
+  height: calc(#{$height-chat-square} - #{$height-sender})
   background-color: white
 
 =box-before($content, $color, $bg-color)
@@ -136,8 +190,9 @@ $marg-sides: 5%
       padding: 4px 10px
       margin: 2px 5px
       color: $color
+      border-radius: 4px
       background-color: $bg-color
-      width: 50px
+      width: 60px
       text-align: center
 
 .message-line

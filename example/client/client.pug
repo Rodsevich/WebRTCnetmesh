@@ -14,8 +14,30 @@ body
     button#registration__connect(disabled) Connect
 
   section#contacts
-    .self Sorpi
-    .contact Nico
+    .self
+      .name Sorpi
+      img.condition(src="assets/mic-mute.svg")
+      img.condition(src="assets/film.svg")
+      .camera
+    .contact
+      .name Nico
+      img.condition(src="assets/speaker.svg")
+      img.condition(src="assets/film.svg")
+      .camera
+    .contact
+      .name Juan
+      img.condition(src="assets/speaker-mute.svg")
+      img.condition(src="assets/film.svg")
+      .camera
+    .contact
+      .name Pepe
+      img.condition(src="assets/speaker.svg")
+      img.condition(src="assets/film-not.svg")
+    .contact
+      .name Yuan
+      img.condition(src="assets/speaker-mute.svg")
+      img.condition(src="assets/film.svg")
+      .camera
   section#chat
     .message-line.message-line--info Welcome
     .message-line.message-line--server Registered as "Sorpi"
