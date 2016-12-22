@@ -3,7 +3,7 @@ import 'dart:async';
 // import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 // import 'package:WebRTCnetmesh/src/cliente/WebRTCnetmesh.dart' deferred as Id;
 
-///Clase usada para representar los cambios en la(s) [Identidad]es
+///Clase usada para representar los cambios en la(s) [Identidad](es)
 class CambioIdentidad {
   String campo;
   var valor_nuevo;
@@ -24,7 +24,11 @@ class CambioIdentidad {
 }
 
 ///Levels of autorizations for clients in order to execute Commands
-enum Roles { ADMIN, MODERATOR, USER, }
+enum Roles {
+  ADMIN,
+  MODERATOR,
+  USER,
+}
 
 ///Clase interna al sistema que maneja toda la lógica
 // class Identidad extends Exportable<Identity> {
@@ -35,6 +39,8 @@ class Identidad {
   String id_goog;
   String id_github;
   String email;
+  String version;
+  List<Roles> roles = [Roles.USER];
   bool es_servidor = false;
   Stream<CambioIdentidad> get onCambios => cambiosController.stream;
 
@@ -94,10 +100,25 @@ class Identidad {
       case 'n':
         this.nombre = codificacion.substring(1);
         break;
+      case '[':
+        int posicion = 1;
+        roles = [];
+        String char;
+        do {
+          char = codificacion[posicion];
+          try {
+            int index = int.parse(char);
+            roles.add(Roles.values[index]);
+          } catch (x) {
+            //formatException o algo... no hacer nada
+          } finally {
+            posicion++;
+          }
+        } while (char != "]");
     }
   }
 
-  actualizarCon(Identidad otra){
+  actualizarCon(Identidad otra) {
     String cod = otra.toString();
     implementarCodificacion(cod);
   }
@@ -112,6 +133,11 @@ class Identidad {
     if (id_feis != null) tmp.add("F$id_feis");
     if (email != null) tmp.add("E$email");
     if (es_servidor) tmp.add('\$');
+    List<int> num_roles = [];
+    roles.forEach((rol) {
+      num_roles.add(rol.index);
+    });
+    tmp.add("[${num_roles.join("|")}]");
     return tmp;
   }
 

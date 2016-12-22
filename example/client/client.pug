@@ -2,17 +2,12 @@
 
 doctype html
 head
-  title WebRTCnetmesh Example
+  title WebRTCnetmesh Chat Example
   meta(name="viewport" content="width=device-width, initial-scale=1.0")
   link(rel='stylesheet', href="client.css")
-body
-  #registration
-    h1 Welcome to WebRTCnetmesh Example!
-    p.
-      Please choose a nickname in order to login
-    input#registration__nickname(placeholder="yourNickname (only letters and no spaces)")
-    button#registration__connect(disabled) Connect
+  script(src="client.dart", type="application/dart", charset="utf-8")
 
+body
   section#contacts
     .self
       .name Sorpi
@@ -45,3 +40,9 @@ body
   section#sender
     input#message-input(placeholder="Message to send")
     button#send-button Send
+  #registration
+    h1 Welcome to WebRTCnetmesh's Chat Example!
+    p.
+      Please choose a nickname in order to login
+    input#registration__nickname(autocomplete="nickname", placeholder="yourNickname (only letters and no spaces)")
+    button#registration__connect(disabled) Connect

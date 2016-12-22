@@ -87,7 +87,7 @@ img.condition
     right:  0
     z-index: -10
 
-    background-color: rgba(0,0,0,0.5)
+    background-color: rgba(0,0,0,0.7)
 
   & > *
     z-index: 20
@@ -106,7 +106,7 @@ img.condition
 
 #registration
 
-  display: none
+  // display: none
 
   @include modal
 
@@ -122,17 +122,21 @@ img.condition
   margin-left: -37.5%
 
   &:after
-    background-color: gray
+    background-color: rgba(50,150,255,0.9)
+
+  p
+    font-size: x-large
 
 #registration__nickname
   text-align: center
   width: 80%
   margin: 0 auto
-
+  font-size: xx-large
 
 #registration__connect
   width: 30%
   margin: 20px auto 0
+  font-size: x-large
 
 $chat-border-width: 4px
 
@@ -182,6 +186,7 @@ $chat-border-width: 4px
   box-shadow: 1px 1px 5px black
   height: calc(#{$height-chat-square} - #{$height-sender})
   background-color: white
+  overflow-y: scroll
 
 =box-before($content, $color, $bg-color)
     &::before

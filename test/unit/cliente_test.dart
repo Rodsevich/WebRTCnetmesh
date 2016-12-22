@@ -10,22 +10,22 @@ import 'package:WebRTCnetmesh/src/cliente/Par.dart';
 import 'package:WebRTCnetmesh/src/cliente/WebSocketDebugger.dart';
 import "package:scheduled_test/scheduled_test.dart";
 
-class Imprimir extends CommandImplementation {
+class Imprimir extends Command {
   @override
   askForPermission() {
     return true;
   }
 
-  @override
-  Impresor executor;
+  Impresor impresor;
 
   Imprimir(Impresor imp) {
-    this.executor = imp;
+    this.impresor = imp;
+    this.name = "imprimir";
   }
 
   @override
   execute() {
-    this.executor.agregarMsj(this.arguments["valor"]);
+    this.impresor.agregarMsj(this.arguments["valor"]);
   }
 }
 
@@ -45,7 +45,7 @@ void main() {
   Identidad identidad = new Identidad("sorpi");
   WebRTCnetmesh cliente;
   Impresor impresor = new Impresor("inicial");
-  List<CommandImplementation> comandos = [];
+  List<Command> comandos = [];
   Imprimir comandoImprimir = new Imprimir(impresor);
   comandos.add(comandoImprimir);
 
@@ -103,11 +103,11 @@ void main() {
       print(codificacion);
       debugger.enviarMensaje(codificacion);
       schedule(() => new Future.delayed(new Duration(milliseconds: 200)));
-      var comparador = new Identity.desdeEncubierto(identidad);
+      var identidadComparadora = new Identity.desdeEncubierto(identidad);
       schedule(() {
         expect(cliente.associates, isList);
         expect(cliente.associates.length, equals(2));
-        expect(cliente.identity.name, equals(comparador.name));
+        expect(cliente.identity.name, equals(identidadComparadora.name));
         expect(cliente.associates[0].identity.name, equals("pp"));
         expect(cliente.associates[1].identity.name, equals("qq"));
       });
@@ -144,7 +144,8 @@ void main() {
     });
 
     String codificacionComando;
-    Command imprimirCmd = comandoImprimir.generateCommand({"valor": "imprimi"});
+    CommandOrder imprimirCmd =
+        comandoImprimir.generateCommand({"valor": "imprimi"});
     test("Obtener CodificacionComando...", () {
       cliente.send(cliente.associates[0], imprimirCmd);
       schedule(() async {
@@ -170,7 +171,8 @@ void main() {
       msj.id_receptor = aux;
       debugger.enviarMensaje(msj.toCodificacion());
       schedule(() => new Future.delayed(new Duration(milliseconds: 300)));
-      schedule(() => expect(impresor.actual, equals(imprimirCmd.arguments["valor"])));
+      schedule(() =>
+          expect(impresor.actual, equals(imprimirCmd.arguments["valor"])));
     }, testOn: "browser");
 
     test("Recibe bien las interacciones", () async {

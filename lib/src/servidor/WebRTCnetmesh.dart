@@ -8,7 +8,7 @@ import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 
 /// Clase que el usuario final deberá instanciar para usar la librería cómoda
 ///y modularmente
-class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
+class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente> {
   Identidad identity;
   Servidor server;
 
@@ -108,8 +108,7 @@ class WebRTCnetmesh extends InterfazEnvioMensaje<Cliente>{
   MensajeInformacion _estadoActualUsuarios(Cliente emisor) {
     InfoUsuarios info_usuarios = new InfoUsuarios();
     for (Cliente c in clients) info_usuarios.usuarios.add(c.identidad);
-    return new MensajeInformacion(
-        identity, emisor.identidad, info_usuarios);
+    return new MensajeInformacion(identity, emisor.identidad, info_usuarios);
   }
 
   _propagarNuevaSuscripcion(Identidad nuevoId) {

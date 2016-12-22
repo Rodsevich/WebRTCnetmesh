@@ -9,8 +9,10 @@ import 'dart:convert';
 void main() {
   Identidad id_parcial = new Identidad("nombre");
   id_parcial.id_sesion = 2;
+  id_parcial.roles = [Roles.ADMIN];
   Identidad id_full = new Identidad("nombre");
   id_full.id_sesion = 2;
+  id_full.roles = [Roles.USER,Roles.MODERATOR];
   id_full.id_feis = "IDFEIS";
   id_full.id_goog = "IDGOOG";
   id_full.id_github = "IDGithub";
@@ -30,11 +32,13 @@ void main() {
     expect(JSON.decode(codificacionJSON), equals(codificacionString));
   }, testOn: "vm");
   test('Identidad parcialmente llena recodifica bien', () {
-    Identidad id = new Identidad.desdeCodificacion(codificacionString);
+    Identidad id = new Identidad.desdeCodificacion(id_parcial.toString());
     expect(id.nombre, equals("nombre"));
     expect(id.id_sesion, equals(2));
+    expect(id.roles, equals([Roles.ADMIN]));
   });
   test('Identidad completamente llena recodifica bien', () {
+    // print(codificacionString);
     Identidad id = new Identidad.desdeCodificacion(codificacionString);
     expect(id.nombre, equals("nombre"));
     expect(id.id_feis, equals("IDFEIS"));
@@ -43,6 +47,8 @@ void main() {
     expect(id.email, equals("pp@qq.com"));
     expect(id.es_servidor, isTrue);
     expect(id.id_sesion, equals(2));
+    expect(id.roles, contains(Roles.USER));
+    expect(id.roles, contains(Roles.MODERATOR));
   }, testOn: "vm");
   group("CambioIdentidad",(){
     CambioIdentidad cambio = new CambioIdentidad('n', 'nombre', "nico");

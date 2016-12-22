@@ -5,7 +5,8 @@ enum FaltasAPI {
   NOMBRE_NO_DISPONIBLE,
   NOMBRE_MAL_FORMADO,
   NODO_CAIDO,
-  NO_AUTORIZADO
+  NO_AUTORIZADO,
+  COMANDO_AUSENTE
 }
 
 /// Indica errores en las conexiones de la libreria
@@ -82,6 +83,16 @@ class FaltaNodoCaido extends Falta {
 class FaltaNoAutorizado extends Falta {
   FaltaNoAutorizado() {
     this.tipo = FaltasAPI.NO_AUTORIZADO;
+  }
+
+  @override
+  serializacionPropia() => null;
+}
+
+///Cuando se pretende ejecutar un [Comando] que el otro par no posee
+class FaltaComandoAusente extends Falta {
+  FaltaNoAutorizado() {
+    this.tipo = FaltasAPI.COMANDO_AUSENTE;
   }
 
   @override

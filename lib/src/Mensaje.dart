@@ -206,20 +206,42 @@ class MensajeSuscripcion extends Mensaje {
 /// WebAPP --> Cliente --> Servidor
 /// Servidor --> Cliente { --> WebAPP } --> WebApp
 class MensajeComando extends Mensaje {
-  Comando comando;
+  CommandOrder orden;
 
-  MensajeComando(emisor, receptor, this.comando) : super(emisor, receptor) {
+  MensajeComando(emisor, receptor, this.orden) : super(emisor, receptor) {
     this.tipo = MensajesAPI.COMANDO;
   }
   MensajeComando.desdeDecodificacion(
       List info_direccionamiento, List msjEspecifico)
       : super.desdeDecodificacion(info_direccionamiento) {
     this.tipo = MensajesAPI.COMANDO;
-    this.comando = new Comando.desdeCodificacion(msjEspecifico);
+    this.orden = new CommandOrder._desdeCodificacion(msjEspecifico);
   }
 
   @override
-  serializacionPropia() => comando;
+  serializacionPropia() => orden;
+}
+
+/// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
+/// WebAPP \[ --> WebAPP \] --> Cliente --> Servidor
+class MensajeInteraccion extends Mensaje {
+  String id_interaccion;
+  Map valores;
+
+  MensajeInteraccion(emisor, receptor, this.id_interaccion, this.valores)
+      : super(emisor, receptor) {
+    this.tipo = MensajesAPI.INTERACCION;
+  }
+  MensajeInteraccion.desdeDecodificacion(
+      List info_direccionamiento, List msjEspecifico)
+      : super.desdeDecodificacion(info_direccionamiento) {
+    this.tipo = MensajesAPI.INTERACCION;
+    this.id_interaccion = msjEspecifico[0];
+    this.valores = msjEspecifico[2];
+  }
+
+  @override
+  serializacionPropia() => [id_interaccion, valores];
 }
 
 /// Los _metadatos_ que mantienen vivo al sistema con, justamente, actualizaciones de Informaciones
@@ -259,28 +281,6 @@ class MensajeFalta extends Mensaje {
 
   @override
   serializacionPropia() => falta;
-}
-
-/// Resultado de alguna interacción por parte del usuario: _votacion_, _encuesta_, _etc..._
-/// WebAPP \[ --> WebAPP \] --> Cliente --> Servidor
-class MensajeInteraccion extends Mensaje {
-  String id_interaccion;
-  Map valores;
-
-  MensajeInteraccion(emisor, receptor, this.id_interaccion, this.valores)
-      : super(emisor, receptor) {
-    this.tipo = MensajesAPI.INFORMACION;
-  }
-  MensajeInteraccion.desdeDecodificacion(
-      List info_direccionamiento, List msjEspecifico)
-      : super.desdeDecodificacion(info_direccionamiento) {
-    this.tipo = MensajesAPI.INFORMACION;
-    this.id_interaccion = msjEspecifico[0];
-    this.valores = msjEspecifico[2];
-  }
-
-  @override
-  serializacionPropia() => [id_interaccion, valores];
 }
 
 /// Mensaje enviado con iniciativa para medir el tiempo de respuesta futuro

@@ -1,16 +1,11 @@
 <!DOCTYPE html>
 <head>
-  <title>WebRTCnetmesh Example</title>
+  <title>WebRTCnetmesh Chat Example</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="client.css">
+  <script src="client.dart" type="application/dart" charset="utf-8"></script>
 </head>
 <body>
-  <div id="registration">
-    <h1>Welcome to WebRTCnetmesh Example!</h1>
-    <p>Please choose a nickname in order to login</p>
-    <input id="registration__nickname" placeholder="yourNickname (only letters and no spaces)">
-    <button id="registration__connect" disabled>Connect</button>
-  </div>
   <section id="contacts">
     <div class="self">
       <div class="name">Sorpi</div><img src="assets/mic-mute.svg" class="condition"><img src="assets/film.svg" class="condition">
@@ -41,4 +36,10 @@
     <input id="message-input" placeholder="Message to send">
     <button id="send-button">Send</button>
   </section>
+  <div id="registration">
+    <h1>Welcome to WebRTCnetmesh's Chat Example!</h1>
+    <p>Please choose a nickname in order to login</p>
+    <input id="registration__nickname" autocomplete="nickname" placeholder="yourNickname (only letters and no spaces)">
+    <button id="registration__connect" disabled>Connect</button>
+  </div>
 </body>

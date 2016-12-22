@@ -123,7 +123,7 @@ abstract class InterfazEnvioMensaje<T> {
       }
     }
 
-    if (data is Command) {
+    if (data is CommandOrder) {
       //Todo: Seguir aca...
       Comando cmd;
       cmd = this.comandos.singleWhere((Comando c) => c.nombre == data.name);

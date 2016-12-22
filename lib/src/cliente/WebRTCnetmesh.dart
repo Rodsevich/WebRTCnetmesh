@@ -9,7 +9,10 @@ import "./Par.dart";
 import "./Servidor.dart";
 import "./Mensaje.dart";
 
-import 'package:meta/meta.dart' show visibleForTesting;
+import 'package:WebRTCnetmesh/src/Identidad.dart';
+import 'package:meta/meta.dart';
+
+part "Identity.dart";
 
 // enum WebRTCnetmeshStates {
 //   NOT_CONNECTED,
@@ -22,7 +25,7 @@ import 'package:meta/meta.dart' show visibleForTesting;
 class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
   Identity identity;
 
-  Stream<Command> get onCommand => onCommandController.stream;
+  Stream<CommandOrder> get onCommand => onCommandController.stream;
   Stream<Mensaje> get onInteraction => onInteractionController.stream;
   Stream<Pair> get onNewConnection => onNewConnectionController.stream;
 
@@ -34,10 +37,13 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
   StreamController onInteractionController = new StreamController.broadcast();
   StreamController onNewConnectionController = new StreamController.broadcast();
 
+  String version;
+
   ClienteWebRTCnetmesh(this.identity, List<Comando> comandos,
       [String server_uri])
       : this.comandos = comandos {
     identidad = identity._id;
+    //TODO: Meter la version del package como definición base de [version]
     servidor = new Servidor(server_uri);
     servidor.onMensaje.listen(manejadorMensajes);
     servidor.onConexion.listen((e) {
@@ -105,7 +111,7 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
       case MensajesAPI.RESPUESTA_WEBRTC:
       case MensajesAPI.CANDIDATOICE_WEBRTC:
         Par par = search(msj.id_emisor);
-        if(par != null){
+        if (par != null) {
           switch (msj.tipo) {
             case MensajesAPI.OFERTA_WEBRTC:
               MensajeRespuestaWebRTC resp =
@@ -138,15 +144,30 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
         }
         break;
       case MensajesAPI.COMANDO:
-        Comando comandoLocal = comandos[(msj as MensajeComando).comando.indice];
-        comandoLocal.cargarDesde((msj as MensajeComando).comando);
-        comandoLocal.ejecutar();
+        try {
+          Comando comandoLocal =
+              conseguirComandoLocal((msj as MensajeComando).orden);
+          try {
+            comandoLocal.ejecutar(search(msj.id_emisor).identidad);
+          } catch (error) {
+            if (error is Falta)
+              send(msj.id_emisor, error);
+            else
+              throw error;
+          }
+        } on StateError {
+          FaltaComandoAusente noHayComando = new FaltaComandoAusente();
+          send(msj.id_emisor, noHayComando);
+        }
         break;
       default:
         throw new Exception(
             "Recibido un mensaje con tipo anomalo: ${msj.tipo}");
     }
   }
+
+  Comando conseguirComandoLocal(CommandOrder orden) =>
+      comandos.singleWhere((c) => c.indentificador == orden.id);
 
   @override
   Par search(id) {
@@ -174,117 +195,40 @@ class ClienteWebRTCnetmesh extends InterfazEnvioMensaje<Par> {
     return par;
   }
 
-  pedirPermisos(bool video, bool audio) {
-    
-  }
+  pedirPermisos(bool video, bool audio) {}
 
   AudioElement audioLocalElem;
   VideoElement videoLocalElem;
 
-  AudioElement get audioLocal{
-    if(audioLocalElem == null){
+  AudioElement get audioLocal {
+    if (audioLocalElem == null) {
       audioLocalElem = new AudioElement();
     }
     return audioLocalElem;
   }
 
-  AudioElement get videoLocal{
-    if(videoLocalElem == null){
+  AudioElement get videoLocal {
+    if (videoLocalElem == null) {
       videoLocalElem = new VideoElement();
     }
     return audioLocalElem;
   }
 }
 
-///Class that the client would use in order to have everybody informed
-class Identity {
-  Identidad _id;
-
-  bool _modificable;
-
-  Identity(String name) {
-    this._id = new Identidad(name);
-    _modificable = true;
-  }
-
-  @visibleForTesting
-  Identity.desdeEncubierto(this._id) {
-    _modificable = false; //De un Pair o algo asi q no admite modificaciones
-  }
-
-  String get name => _id.nombre;
-
-  void set name(String name) {
-    if (_modificable) {
-      CambioIdentidad cambio = new CambioIdentidad('n', _id.nombre, name);
-      _id.nombre = name;
-      _id.cambiosController.add(cambio);
-    } else
-      throw "Not possible to change Identities other than yours own";
-  }
-
-  String get email => _id.email;
-
-  void set email(String email) {
-    if (_modificable) {
-      CambioIdentidad cambio = new CambioIdentidad('E', _id.email, email);
-      _id.email = email;
-      _id.cambiosController.add(cambio);
-    } else
-      throw "Not possible to change Identities other than yours own";
-  }
-
-  String get facebook_id => _id.id_feis;
-
-  void set facebook_id(String facebook_id) {
-    if (_modificable) {
-      CambioIdentidad cambio =
-          new CambioIdentidad('F', _id.id_feis, facebook_id);
-      _id.id_feis = facebook_id;
-      _id.cambiosController.add(cambio);
-    } else
-      throw "Not possible to change Identities other than yours own";
-  }
-
-  String get google_id => _id.id_goog;
-
-  void set google_id(String google_id) {
-    if (_modificable) {
-      CambioIdentidad cambio = new CambioIdentidad('G', _id.id_goog, google_id);
-      _id.id_goog = google_id;
-      _id.cambiosController.add(cambio);
-    } else
-      throw "Not possible to change Identities other than yours own";
-  }
-
-  String get github_id => _id.id_github;
-
-  void set github_id(String github_id) {
-    if (_modificable) {
-      CambioIdentidad cambio =
-          new CambioIdentidad('g', _id.id_github, github_id);
-      _id.id_github = github_id;
-      _id.cambiosController.add(cambio);
-    } else
-      throw "Not possible to change Identities other than yours own";
-  }
-
-}
-
 ///Public use class to encapsulate internal logic
 class WebRTCnetmesh {
   ClienteWebRTCnetmesh _cliente;
 
-  WebRTCnetmesh(
-      Identity identity, List<CommandImplementation> commandImplementations,
+  WebRTCnetmesh(Identity identity, List<Command> commandImplementations,
       [String server_uri = null]) {
     List<Comando> comandos = [];
     for (var i = 0; i < commandImplementations.length; i++) {
-      if (commandImplementations[i] is! CommandImplementation ||
-          commandImplementations[i].runtimeType.toString() ==
-              "CommandImplementation")
-        throw new Exception("Must be a subclass of CommandImplementation");
-      comandos.insert(i, new Comando(commandImplementations[i], i));
+      if (commandImplementations[i] is! Command ||
+          commandImplementations[i].runtimeType.toString() == "Command")
+        throw new Exception("Must be a subclass of Command");
+      commandImplementations[i]
+          .comandos
+          .insert(i, new Comando(commandImplementations[i], i));
     }
     _cliente = new ClienteWebRTCnetmesh(identity, comandos, server_uri);
   }
@@ -298,7 +242,8 @@ class WebRTCnetmesh {
   send(to, data) => _cliente.send(to, data);
   sendAll(data) => _cliente.sendAll(data);
 
-  requestMediaPermissions({bool video: true, bool audio: true}) => _cliente.pedirPermisos(video, audio);
+  requestMediaPermissions({bool video: true, bool audio: true}) =>
+      _cliente.pedirPermisos(video, audio);
 
   Stream get onCommand => _cliente.onCommand;
   Stream get onInteraction => _cliente.onInteraction;

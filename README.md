@@ -2,15 +2,8 @@
 
 A library for interconnecting several browsers through WebRTC via websockets.
 
-## Usage
-
-A simple usage example:
-
-    import 'package:WebRTCnetmesh/WebRTCnetmesh.dart';
-
-    main() {
-      var awesome = new Awesome();
-    }
+This library _is_ useful, but I'm not gonna document much of it 'til july or so (if and only if Gos wants that).
+Any questions or interest on this, send an issue or a mail to nicorodsevich[at]gmail.com and I will hurry the plans up
 
 ## Features and bugs
 
@@ -24,4 +17,4 @@ ToDos:
   - _new Identidad()_ a secas, se carga con algún ID. Se envía solicitud. El servidor completa la ID
   - En el servidor:
     - WebRTCnetmesh.onOAuthRequest()
-    - WebRTCnetmesh.reuqestBDSearch(id)
+    - WebRTCnetmesh.requestBDSearch(id)

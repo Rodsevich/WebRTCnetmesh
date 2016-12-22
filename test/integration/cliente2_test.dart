@@ -5,22 +5,22 @@ import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 import "package:test/test.dart";
 import "package:WebRTCnetmesh/WebRTCnetmesh_client.dart";
 
-class Imprimir extends CommandImplementation {
+class Imprimir extends Command {
   @override
   askForPermission() {
     return true;
   }
 
   @override
-  Impresor executor;
+  Impresor impresor;
 
   Imprimir(Impresor imp) {
-    this.executor = imp;
+    this.impresor = imp;
   }
 
   @override
   execute() {
-    this.executor.agregarMsj(this.arguments["valor"]);
+    this.impresor.agregarMsj(this.arguments["valor"]);
   }
 }
 
