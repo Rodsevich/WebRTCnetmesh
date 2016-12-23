@@ -24,8 +24,8 @@ class Imprimir extends Command {
   }
 
   @override
-  execute() {
-    this.impresor.agregarMsj(this.arguments["valor"]);
+  void execution(Identity user, Map args) {
+    this.impresor.agregarMsj(args["mensaje"]);
   }
 }
 
@@ -142,10 +142,11 @@ void main() {
     test("Puede conseguir pairs", () {
       expect(cliente.associates[0], new isInstanceOf<Pair>());
     });
-
+  });
+  group("Comandos:", () {
     String codificacionComando;
     CommandOrder imprimirCmd =
-        comandoImprimir.generateCommand({"valor": "imprimi"});
+        comandoImprimir.generateCommand({"mensaje": "imprimi"});
     test("Obtener CodificacionComando...", () {
       cliente.send(cliente.associates[0], imprimirCmd);
       schedule(() async {
@@ -154,6 +155,7 @@ void main() {
       });
       // schedule(() => new Future.delayed(new Duration(milliseconds: 500)));
       schedule(() => expect(codificacionComando, new isInstanceOf<String>()));
+      schedule(() => expect(codificacionComando, contains("0,{}")););
     });
 
     test("Manda bien los comandos", () {
@@ -172,7 +174,7 @@ void main() {
       debugger.enviarMensaje(msj.toCodificacion());
       schedule(() => new Future.delayed(new Duration(milliseconds: 300)));
       schedule(() =>
-          expect(impresor.actual, equals(imprimirCmd.arguments["valor"])));
+          expect(impresor.actual, equals(imprimirCmd.arguments["mensaje"])));
     }, testOn: "browser");
 
     test("Recibe bien las interacciones", () async {

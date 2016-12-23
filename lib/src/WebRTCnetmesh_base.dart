@@ -58,7 +58,10 @@ abstract class Asociado {
       new DateTime.now().difference(establecimientoConexion);
 }
 
-class Associate {}
+abstract class Associate {
+  var identity;
+  List<Roles> get roles => identity.roles;
+}
 
 abstract class Exportable<T> {
   T exportado;
@@ -138,8 +141,7 @@ abstract class InterfazEnvioMensaje<T> {
     if (medio == null) {
       throw new Exception("Hubo un lindo error por acá :/");
     } else {
-      if(medio.tieneConexion == false)
-        medio = this.servidor;
+      if (medio.tieneConexion == false) medio = this.servidor;
       medio.enviarMensaje(msj);
     }
   }
@@ -152,11 +154,8 @@ abstract class InterfazEnvioMensaje<T> {
         : new Mensaje.desdeDatos(
             this.identidad, DestinatariosMensaje.TODOS, data);
     print(mensaje.toCodificacion());
-    if(this.servidor.tieneConexion)
-      send(this.servidor, mensaje);
-    associates
-        .where((a) => a.tieneConexion)
-        .forEach((a) => send(a, mensaje));
+    if (this.servidor.tieneConexion) send(this.servidor, mensaje);
+    associates.where((a) => a.tieneConexion).forEach((a) => send(a, mensaje));
   }
 
   T search(id);

@@ -1,20 +1,19 @@
 name: WebRTCnetmesh
-description: A starting point for Dart libraries or applications.
+description: Library that automates and simplifies all related to WebRTC with features that maximizes eficiency
 version: 0.0.1
-#author: Nico Rodsevich <email@example.com>
+author: Nico Rodsevich <nicorodsevich@gmail.com>
 #homepage: https://www.example.com
 
 environment:
   sdk: '>=1.0.0 <2.0.0'
 
 dependencies:
- w_transport: any
  meta: any
 
 dev_dependencies:
   test: '>=0.12.0'
+  scheduled_test: '>=0.12.0'
   coverage: "^0.7.3"
   dart_dev: "^1.0.0"
   dart_style: ">=0.1.8 <0.3.0"
   dartdoc: "^0.4.0"
-  scheduled_test: '>=0.12.0'

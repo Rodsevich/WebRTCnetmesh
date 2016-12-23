@@ -1,7 +1,7 @@
 timeout: 40s
 platforms:
 - vm
-- content-shell
+# - content-shell
 # - dartium
 
 concurrency: 2

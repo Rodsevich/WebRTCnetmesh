@@ -1,12 +1,12 @@
-import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
-import 'package:WebRTCnetmesh/src/cliente/WebRTCnetmesh.dart';
-
 ///Contenedor implementación de Comandos
 // class ContenedorComandos{
 //   final List<Comando> comandos;
 //
 //   ContenedorComandos
 // }
+
+import 'package:WebRTCnetmesh/src/Identidad.dart';
+import 'package:WebRTCnetmesh/src/WebRTCnetmesh_base.dart';
 
 ///Wrapper y ejecutor de [Command] para:
 /// -Ejecutar la implementación
@@ -25,18 +25,11 @@ class Comando {
 
   Comando(this.implementacion, this.indice);
 
-  cargarDesde(Comando otro) {
-    this.indice ??= otro.indice;
-    this.implementacion ??= otro.implementacion;
-    this.arguments = otro.arguments;
-  }
-
   ejecutar(Identidad usuario) {
     if (implementacion == null)
       throw "Tenés que ponerme la implementación... como coño me hiciste? O.o";
     implementacion._ejecutarOrden(usuario, arguments);
   }
-
 }
 
 /// Used to execute a [Command] from another [WebRTCnetmesh] paired client
@@ -44,13 +37,13 @@ class Comando {
 class CommandOrder extends Codificable {
   String id;
   Map arguments = {};
-  // Identity transmitter;
+  // Associate transmitter;
 
   CommandOrder(this.id, this.arguments);
   CommandOrder._desdeCodificacion(codificacion) {
-    this.indice = codificacion[0];
+    this.id = codificacion[0];
     this.arguments = codificacion[1];
-  };
+  }
 
   @override
   serializacionPropia() => [id, arguments];
@@ -61,8 +54,8 @@ class CommandOrder extends Codificable {
 abstract class Command {
   bool requiresPermission = true;
   bool _permisoConcedido = false;
-  List<Identity> allowedUsers = [];
-  List<Identity> deniedUsers = [];
+  List<Associate> allowedAssociates = [];
+  List<Associate> deniedAssociates = [];
   List<Roles> allowedRoles = [Roles.ADMIN];
 
   /// When adding Commands after creation of [WebRTCnetmesh] client, they must be
@@ -74,13 +67,13 @@ abstract class Command {
   String _identifier;
 
   bool askForPermission();
-  void execution(Identity user, Map args);
-  _ejecutarOrden(Identidad usuario, Map args) {
-    Identity identity = new Identity.desdeEncubierto(usuario);
-    if (false == allowedUsers.contains(identity)) {
-      if (deniedUsers.contains(identity))
+  void execution(Associate associate, Map args);
+  _ejecutarOrden(Associate asociadoEjecutor, Map args) {
+    var identity = asociadoEjecutor.identity;
+    if (false == allowedAssociates.contains(identity)) {
+      if (deniedAssociates.contains(identity))
         throw new Exception("Usuario denegado");
-      if (allowedRoles.any((rol) => usuario.roles.contains(rol)))
+      if (allowedRoles.any((rol) => asociadoEjecutor.roles.contains(rol)))
         throw new Exception("No se tiene rol requerido");
     }
     if (requiresPermission) {
