@@ -1,9 +1,9 @@
 # WebRTCnetmesh
 
-A library for interconnecting several browsers through WebRTC via websockets.
+A library for interconnecting several browsers through WebRTC via websockets. (someday...)
 
-This library _is_ useful, but I'm not gonna document much of it 'til july or so (if and only if Gos wants that).
-Any questions or interest on this, send an issue or a mail to nicorodsevich[at]gmail.com and I will hurry the plans up
+# USAR ESTA GENIALIDAD (como no estaba antes la ptm!!?!!?)
+[MsgPack](https://github.com/DirectMyFile/msgpack.dart)
 
 ## Features and bugs
 
